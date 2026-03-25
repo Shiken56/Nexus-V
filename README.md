@@ -28,8 +28,10 @@ The SoC routes traffic between the CPU and peripherals based on a 32-bit address
 | UART Status      | 0x2000_0004  | 4 B   | Bit 0: TX Ready, Bit 1: RX Valid     |
 
 
+## 📂 Project Structure
+
+```text
 RISC-V-SoC-on-FPGA/
-│
 ├── RVSoC/                  # Vivado Project
 │   ├── sources/            # Verilog RTL (top.v, picorv32.v)
 │   └── constraints/        # XDC files for Nexys 4 DDR
@@ -39,6 +41,7 @@ RISC-V-SoC-on-FPGA/
 │   └── firmware.hex        # Compiled binary
 │
 └── README.md               # Project Documentation
+```
 
 
 
