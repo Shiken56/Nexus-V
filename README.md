@@ -4,7 +4,7 @@
 
 ---
 
-## 🚀 Key Features
+## 🚀 Key Features ( In progress )
 
 - **CPU Core:** PicoRV32 (RV32I ISA)  
 - **Memory:** 4KB On-chip Block RAM (BRAM)  
@@ -56,6 +56,11 @@ RISC-V-SoC-on-FPGA/
 1. **Compile Firmware**  
    Navigate to the `firmware/` directory and run:
    ```bash
+   make clean
+   ```
+   
+   ```bash
    make
+   ```
 
 
