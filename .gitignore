@@ -1,0 +1,8 @@
+# Vivado junk
+*.cache/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+*.log
+*.jou
