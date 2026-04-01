@@ -2,45 +2,63 @@
 
 module tb_top();
 
-    // 1. Declare signals to connect to our top module
-    reg clk;
-    reg resetn;
-    wire led;
+    // --- Signals ---
+    reg  clk;
+    reg  resetn;
+    wire [7:0] led;
+    wire uart_tx;
+    reg  uart_rx;
 
-    // 2. Instantiate the top module (Device Under Test)
-    top dut (
+    // --- Instantiate the SoC ---
+    top uut (
         .clk(clk),
         .resetn(resetn),
-        .led(led)
+        .led(led),
+        .uart_tx(uart_tx),
+        .uart_rx(uart_rx)
     );
 
-    // 3. Generate a 100MHz Clock (10ns period -> toggle every 5ns)
-    always #5 clk = ~clk;
-
-    // 4. Test Sequence
+    // --- Clock Generation (100MHz = 10ns period) ---
     initial begin
-        // Initialize inputs
         clk = 0;
-        resetn = 0; // Assert Active-Low Reset
+        forever #5 clk = ~clk; 
+    end
 
-        // Wait 100ns to let everything settle
+    // --- Reset Sequence ---
+    initial begin
+        // Initialize everything
+        resetn = 0;
+        uart_rx = 1; // UART idle state is HIGH
+        
+        // Hold reset for 100ns, then release
         #100;
-
-        // Release reset to wake up the processor
         resetn = 1;
 
-        // The processor is now running! 
-        // We will let the simulation run for 50,000 nanoseconds to watch the LED toggle
-        #50000;
+        // Let the processor run for a solid chunk of time
+        // 50 milliseconds should be enough to boot and print a short string
+        #50_000_000; 
         
-        // Stop the simulation
-        $display("Simulation complete.");
+        $display("\n[TB] Simulation Time Limit Reached.");
         $finish;
     end
 
-    // Optional: Monitor the LED output in the console
-    always @(posedge led or negedge led) begin
-        $display("Time: %0t ns | LED changed state to: %b", $time, led);
+    // --- Magic UART Receiver (Prints TX to Console) ---
+    // At 100MHz and 115200 Baud, 1 bit = ~868 clock cycles = 8680ns
+    reg [7:0] rx_byte;
+    integer i;
+    
+    always @(negedge uart_tx) begin
+        #4340; // Wait half a bit period to sample perfectly in the middle
+        if (uart_tx == 0) begin // Verify it's a valid Start Bit
+            for (i = 0; i < 8; i = i + 1) begin
+                #8680; // Wait one full bit period
+                rx_byte[i] = uart_tx; // Sample the data bit
+            end
+            #8680; // Wait for the Stop Bit
+            
+            // Print the decoded ASCII character to the Vivado Tcl Console!
+            $write("%c", rx_byte); 
+        end
     end
 
 endmodule

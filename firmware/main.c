@@ -29,7 +29,7 @@ void main() {
 
     while(1) {
 
-        uart_print("Hello World from RISC-V!\r\n");
+        uart_print("Axi_lite works :)\r\n");
 
 
         LED_REG = ~LED_REG; 
