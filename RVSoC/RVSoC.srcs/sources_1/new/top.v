@@ -1,15 +1,18 @@
-`timescale 1ns / 1ps
-
 module top (
     input  clk,           // 100MHz clock from Nexys 4 DDR
     input  resetn,        // Active-low reset (CPU_RESET button)
     output [7:0] led,     // 8 LEDs on the board
     output uart_tx,       // FPGA TX Pin
-    input  uart_rx        // FPGA RX Pin
+    input  uart_rx,        // FPGA RX Pin
+ 
+    // --- NEW: ADXL362 SPI Pins ---
+    output spi_clk,
+    output spi_mosi,
+    input  spi_miso,
+    output spi_cs_n
 );
-
-
-
+    
+    
     // --- PicoRV32 AXI4-Lite Master Signals ---
     // 1. AW Channel (Address Write)
     wire        mem_axi_awvalid;
@@ -24,8 +27,8 @@ module top (
     wire [ 3:0] mem_axi_wstrb;
 
     // 3. B Channel (Write Response)
-    wire        mem_axi_bvalid;
-    wire        mem_axi_bready;
+    wire        mem_axi_bvalid; 
+    wire        mem_axi_bready; 
 
     // 4. AR Channel (Address Read)
     wire        mem_axi_arvalid;
@@ -98,15 +101,22 @@ module top (
     wire [31:0] uart_araddr; wire [2:0] uart_arprot; wire uart_arvalid; wire uart_arready;
     reg  [31:0] uart_rdata;  wire [1:0] uart_rresp;  wire uart_rvalid;  wire uart_rready;
 
+    // --- Slave 3: SPI Wires ---
+    wire [31:0] spi_awaddr;  wire [2:0] spi_awprot;  wire spi_awvalid; wire spi_awready;
+    wire [31:0] spi_wdata;   wire [3:0] spi_wstrb;   wire spi_wvalid;  wire spi_wready;
+    wire [1:0]  spi_bresp;   wire spi_bvalid;        wire spi_bready;
+    wire [31:0] spi_araddr;  wire [2:0] spi_arprot;  wire spi_arvalid; wire spi_arready;
+    wire [31:0] spi_rdata;   wire [1:0] spi_rresp;   wire spi_rvalid;  wire spi_rready;
+
     // --- Instantiate Alex Forencich's AXI-Lite Crossbar ---
     axil_crossbar #(
         .S_COUNT(1), // 1 Master (CPU)
-        .M_COUNT(3), // 3 Slaves (UART, LED, RAM)
+        .M_COUNT(4), // 4 Slaves (SPI, UART, LED, RAM)
         .DATA_WIDTH(32),
         .ADDR_WIDTH(32),
-        // Define the memory map: {Slave 2, Slave 1, Slave 0}
-        .M_BASE_ADDR  ({32'h2000_0000, 32'h1000_0000, 32'h0000_0000}),
-        .M_ADDR_WIDTH ({32'd16,        32'd16,        32'd16}) // Give each slave a 64KB address space
+        // Define the memory map: {Slave 3, Slave 2, Slave 1, Slave 0}
+        .M_BASE_ADDR  ({32'h3000_0000, 32'h2000_0000, 32'h1000_0000, 32'h0000_0000}),
+        .M_ADDR_WIDTH ({32'd16,        32'd16,        32'd16,        32'd16}) // Give each slave a 64KB address space
     ) axi_router (
         .clk(clk),
         .rst(!resetn), // Crossbar usually takes active-high reset
@@ -123,30 +133,30 @@ module top (
         .s_axil_rdata  (mem_axi_rdata),   .s_axil_rresp  (),               // CPU ignores rresp
         .s_axil_rvalid (mem_axi_rvalid),  .s_axil_rready (mem_axi_rready),
 
-        // Slave Outputs (Concatenated as {UART, LED, RAM})
-        .m_axil_awaddr ({uart_awaddr,  led_awaddr,  ram_awaddr}),
-        .m_axil_awprot ({uart_awprot,  led_awprot,  ram_awprot}),
-        .m_axil_awvalid({uart_awvalid, led_awvalid, ram_awvalid}),
-        .m_axil_awready({uart_awready, led_awready, ram_awready}),
+        // Slave Outputs (Concatenated as {SPI, UART, LED, RAM})
+        .m_axil_awaddr ({spi_awaddr,  uart_awaddr,  led_awaddr,  ram_awaddr}),
+        .m_axil_awprot ({spi_awprot,  uart_awprot,  led_awprot,  ram_awprot}),
+        .m_axil_awvalid({spi_awvalid, uart_awvalid, led_awvalid, ram_awvalid}),
+        .m_axil_awready({spi_awready, uart_awready, led_awready, ram_awready}),
         
-        .m_axil_wdata  ({uart_wdata,   led_wdata,   ram_wdata}),
-        .m_axil_wstrb  ({uart_wstrb,   led_wstrb,   ram_wstrb}),
-        .m_axil_wvalid ({uart_wvalid,  led_wvalid,  ram_wvalid}),
-        .m_axil_wready ({uart_wready,  led_wready,  ram_wready}),
+        .m_axil_wdata  ({spi_wdata,   uart_wdata,   led_wdata,   ram_wdata}),
+        .m_axil_wstrb  ({spi_wstrb,   uart_wstrb,   led_wstrb,   ram_wstrb}),
+        .m_axil_wvalid ({spi_wvalid,  uart_wvalid,  led_wvalid,  ram_wvalid}),
+        .m_axil_wready ({spi_wready,  uart_wready,  led_wready,  ram_wready}),
         
-        .m_axil_bresp  ({uart_bresp,   led_bresp,   ram_bresp}),
-        .m_axil_bvalid ({uart_bvalid,  led_bvalid,  ram_bvalid}),
-        .m_axil_bready ({uart_bready,  led_bready,  ram_bready}),
+        .m_axil_bresp  ({spi_bresp,   uart_bresp,   led_bresp,   ram_bresp}),
+        .m_axil_bvalid ({spi_bvalid,  uart_bvalid,  led_bvalid,  ram_bvalid}),
+        .m_axil_bready ({spi_bready,  uart_bready,  led_bready,  ram_bready}),
         
-        .m_axil_araddr ({uart_araddr,  led_araddr,  ram_araddr}),
-        .m_axil_arprot ({uart_arprot,  led_arprot,  ram_arprot}),
-        .m_axil_arvalid({uart_arvalid, led_arvalid, ram_arvalid}),
-        .m_axil_arready({uart_arready, led_arready, ram_arready}),
+        .m_axil_araddr ({spi_araddr,  uart_araddr,  led_araddr,  ram_araddr}),
+        .m_axil_arprot ({spi_arprot,  uart_arprot,  led_arprot,  ram_arprot}),
+        .m_axil_arvalid({spi_arvalid, uart_arvalid, led_arvalid, ram_arvalid}),
+        .m_axil_arready({spi_arready, uart_arready, led_arready, ram_arready}),
         
-        .m_axil_rdata  ({uart_rdata,   led_rdata,   ram_rdata}),
-        .m_axil_rresp  ({uart_rresp,   led_rresp,   ram_rresp}),
-        .m_axil_rvalid ({uart_rvalid,  led_rvalid,  ram_rvalid}),
-        .m_axil_rready ({uart_rready,  led_rready,  ram_rready})
+        .m_axil_rdata  ({spi_rdata,   uart_rdata,   led_rdata,   ram_rdata}),
+        .m_axil_rresp  ({spi_rresp,   uart_rresp,   led_rresp,   ram_rresp}),
+        .m_axil_rvalid ({spi_rvalid,  uart_rvalid,  led_rvalid,  ram_rvalid}),
+        .m_axil_rready ({spi_rready,  uart_rready,  led_rready,  ram_rready})
     );
 
    
@@ -159,6 +169,8 @@ module top (
     
     // Prescale for 115200 baud: 100MHz / (115200 * 8) = 108
     wire [15:0] uart_prescale = 16'd108; 
+
+    reg [7:0]  tx_data_reg; // Holds data for the physical UART IP
 
     // --- Instantiate Alex Forencich UART ---
     uart #( .DATA_WIDTH(8) ) uart_inst (
@@ -309,7 +321,7 @@ module top (
     // ------------------------------------------
     reg uart_aw_latched, uart_w_latched, uart_bvalid_reg;
     reg [31:0] uart_awaddr_reg, uart_wdata_reg;
-    reg [7:0]  tx_data_reg; // Holds data for the physical UART IP
+    
 
     assign uart_awready = !uart_aw_latched && !uart_bvalid_reg;
     assign uart_wready  = !uart_w_latched  && !uart_bvalid_reg;
@@ -380,5 +392,51 @@ module top (
             end
         end
     end
+
+
+    // ------------------------------------------
+    // 4. AXI-Lite SPI Wrapper (Address 0x3000_0000)
+    // ------------------------------------------
+    axi_spi_ctrl #(
+        .C_S_AXIL_DATA_WIDTH(32),
+        .C_S_AXIL_ADDR_WIDTH(32),
+        .CLKS_PER_HALF_BIT(50) // 100MHz / (2 * 1MHz SPI Clock) = 50        
+    ) spi_subsystem (
+        .clk(clk),
+        .resetn(resetn),
+
+        // Connect to the Crossbar Wires
+        .s_axil_awaddr (spi_awaddr), 
+        .s_axil_awprot (spi_awprot), 
+        .s_axil_awvalid(spi_awvalid), 
+        .s_axil_awready(spi_awready),
+        
+        .s_axil_wdata  (spi_wdata), 
+        .s_axil_wstrb  (spi_wstrb), 
+        .s_axil_wvalid (spi_wvalid), 
+        .s_axil_wready (spi_wready),
+        
+        .s_axil_bresp  (spi_bresp), 
+        .s_axil_bvalid (spi_bvalid), 
+        .s_axil_bready (spi_bready),
+        
+        .s_axil_araddr (spi_araddr), 
+        .s_axil_arprot (spi_arprot), 
+        .s_axil_arvalid(spi_arvalid), 
+        .s_axil_arready(spi_arready),
+        
+        .s_axil_rdata  (spi_rdata), 
+        .s_axil_rresp  (spi_rresp), 
+        .s_axil_rvalid (spi_rvalid), 
+        .s_axil_rready (spi_rready),
+
+        // Physical Output Wires
+        .o_SPI_Clk  (spi_clk),
+        .i_SPI_MISO (spi_miso),
+        .o_SPI_MOSI (spi_mosi),
+        .o_SPI_CS_n (spi_cs_n)
+    );
+
+    
 endmodule
 

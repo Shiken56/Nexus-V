@@ -28,3 +28,17 @@ set_property PACKAGE_PIN D4 [get_ports uart_tx]
 set_property PACKAGE_PIN C4 [get_ports uart_rx]
 set_property IOSTANDARD LVCMOS33 [get_ports uart_rx]
 set_property IOSTANDARD LVCMOS33 [get_ports uart_tx]
+
+
+# --- ADXL362 SPI Accelerometer Pins ---
+set_property PACKAGE_PIN F15 [get_ports spi_clk]
+set_property IOSTANDARD LVCMOS33 [get_ports spi_clk]
+
+set_property PACKAGE_PIN F14 [get_ports spi_mosi]
+set_property IOSTANDARD LVCMOS33 [get_ports spi_mosi]
+
+set_property PACKAGE_PIN E15 [get_ports spi_miso]
+set_property IOSTANDARD LVCMOS33 [get_ports spi_miso]
+
+set_property PACKAGE_PIN D15 [get_ports spi_cs_n]
+set_property IOSTANDARD LVCMOS33 [get_ports spi_cs_n]
