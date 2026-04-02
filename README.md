@@ -4,7 +4,7 @@
 
 ---
 
-## 🚀 Key Features ( In progress )
+## Key Features ( In progress )
 
 - **CPU Core:** PicoRV32 (RV32I ISA)  
 - **Memory:** 4KB On-chip Block RAM (BRAM)  
@@ -14,7 +14,7 @@
 
 ---
 
-## 🏗 System Architecture
+## System Architecture
 
 The SoC routes traffic between the CPU and peripherals based on a 32-bit address space.
 
@@ -28,7 +28,7 @@ The SoC routes traffic between the CPU and peripherals based on a 32-bit address
 | UART Status      | 0x2000_0004  | 4 B   | Bit 0: TX Ready, Bit 1: RX Valid     |
 
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 RISC-V-SoC-on-FPGA/
@@ -45,7 +45,7 @@ RISC-V-SoC-on-FPGA/
 
 
 
-## 🛠 Getting Started
+## Getting Started
 
 ### Prerequisites
 
