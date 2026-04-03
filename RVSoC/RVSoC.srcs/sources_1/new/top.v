@@ -72,7 +72,32 @@ module top (
         .prescale(uart_prescale)
     );
 
-    // --- Memory Routing & Control Logic ---
+    // --- 8-Bit LED Register ---
+    reg [7:0] led_reg;
+    assign led = led_reg;
+
+    // ==========================================
+    // PHASE 3: BULLETPROOF AXI-LITE WRAPPERS
+    // ==========================================
+
+    // ------------------------------------------
+    // 1. AXI-Lite RAM (8KB)
+    // ------------------------------------------
+    reg [31:0] memory [0:2047];
+    initial begin
+        $readmemh("C:/Users/srsha/Desktop/IEEE_projects/Nexus-V/firmware/bootloader.hex", memory);
+    end
+
+    // RAM Write Channel (Independent Latching)
+    reg ram_aw_latched, ram_w_latched, ram_bvalid_reg;
+    reg [31:0] ram_awaddr_reg, ram_wdata_reg;
+    reg [3:0]  ram_wstrb_reg;
+
+    assign ram_awready = !ram_aw_latched && !ram_bvalid_reg;
+    assign ram_wready  = !ram_w_latched  && !ram_bvalid_reg;
+    assign ram_bvalid  = ram_bvalid_reg;
+    assign ram_bresp   = 2'b00;
+
     always @(posedge clk) begin
         if (!resetn) begin
             mem_ready <= 0;
