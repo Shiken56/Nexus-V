@@ -1,25 +1,32 @@
-# 1. Define your toolchain prefix 
-PREFIX = riscv-none-elf-
+PREFIX = riscv64-unknown-elf-
 CC = $(PREFIX)gcc
 OBJCOPY = $(PREFIX)objcopy
 
-# 2. Define the compiler flags
-CFLAGS = -march=rv32i -mabi=ilp32 -nostartfiles -T linker.ld
+CFLAGS_BASE = -march=rv32i -mabi=ilp32 -nostartfiles -O2
 
-# 3. Define the source files
-SRCS = start.S main.c
+# --- BOOTLOADER DEFINITIONS ---
+BOOT_SRCS = boot_start.s boot.c
+BOOT_CFLAGS = $(CFLAGS_BASE) -T boot.ld
 
-# 4. The default target that runs when you just type 'make'
-all: firmware.hex
+# --- APPLICATION DEFINITIONS ---
+APP_SRCS = app_start.s app.c
+APP_CFLAGS = $(CFLAGS_BASE) -T app.ld
 
-# 5. Rule to build the ELF binary
-firmware.elf: $(SRCS) linker.ld
-	$(CC) $(CFLAGS) $(SRCS) -o firmware.elf
+all: bootloader.hex firmware.bin
 
-# 6. Rule to convert the ELF into the raw HEX format for Vivado
-firmware.hex: firmware.elf
-	$(OBJCOPY) -O verilog --verilog-data-width=4 firmware.elf firmware.hex
+# Build Bootloader (For Vivado synthesis)
+bootloader.elf: $(BOOT_SRCS) boot.ld
+	$(CC) $(BOOT_CFLAGS) $(BOOT_SRCS) -o bootloader.elf
 
-# 7. A cleanup command to remove generated files (Windows version)
+bootloader.hex: bootloader.elf
+	$(OBJCOPY) -O verilog --verilog-data-width=4 bootloader.elf bootloader.hex
+
+# Build Application (For UART upload)
+firmware.elf: $(APP_SRCS) app.ld
+	$(CC) $(APP_CFLAGS) $(APP_SRCS) -o firmware.elf
+
+firmware.bin: firmware.elf
+	$(OBJCOPY) -O binary firmware.elf firmware.bin
+
 clean:
-	del /Q /F firmware.elf firmware.hex
+	del /Q /F *.elf *.hex *.bin
