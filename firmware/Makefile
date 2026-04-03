@@ -1,5 +1,5 @@
 # 1. Define your toolchain prefix 
-PREFIX = riscv-none-elf-
+PREFIX = riscv64-unknown-elf-
 CC = $(PREFIX)gcc
 OBJCOPY = $(PREFIX)objcopy
 

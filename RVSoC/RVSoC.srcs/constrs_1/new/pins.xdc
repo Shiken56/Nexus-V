@@ -25,3 +25,8 @@ set_property PACKAGE_PIN D4 [get_ports uart_tx]
 set_property PACKAGE_PIN C4 [get_ports uart_rx]
 set_property IOSTANDARD LVCMOS33 [get_ports uart_rx]
 set_property IOSTANDARD LVCMOS33 [get_ports uart_tx]
+
+set_property PACKAGE_PIN C14 [get_ports scl]
+set_property PACKAGE_PIN C15 [get_ports sda]
+set_property IOSTANDARD LVCMOS33 [get_ports scl]
+set_property IOSTANDARD LVCMOS33 [get_ports sda]
