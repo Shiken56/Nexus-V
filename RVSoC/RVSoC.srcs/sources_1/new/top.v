@@ -1,17 +1,26 @@
 module top (
-    input  clk,           // 100MHz clock from Nexys 4 DDR
-    input  resetn,        // Active-low reset (CPU_RESET button)
-    output [7:0] led,     // 8 LEDs on the board
-    output uart_tx,       // FPGA TX Pin
-    input  uart_rx,        // FPGA RX Pin
- 
-    // --- NEW: ADXL362 SPI Pins ---
+    input  clk,           
+    input  resetn,        
+    output [7:0] led,     
+    output uart_tx,       
+    input  uart_rx,       
     output spi_clk,
     output spi_mosi,
     input  spi_miso,
-    output spi_cs_n
+    output spi_cs_n,
+    // --- NEW: VGA Pins ---
+    output [3:0] vga_r,
+    output [3:0] vga_g,
+    output [3:0] vga_b,
+    output vga_hs,
+    output vga_vs
 );
-    
+    reg [1:0] clk_div;
+    wire clk_25 = clk_div[1]; // Divides 100MHz by 4 to get 25MHz
+    always @(posedge clk) begin
+        if (!resetn) clk_div <= 0;
+        else clk_div <= clk_div + 1;
+    end
     
     // --- PicoRV32 AXI4-Lite Master Signals ---
     // 1. AW Channel (Address Write)
@@ -111,12 +120,12 @@ module top (
     // --- Instantiate Alex Forencich's AXI-Lite Crossbar ---
     axil_crossbar #(
         .S_COUNT(1), // 1 Master (CPU)
-        .M_COUNT(4), // 4 Slaves (SPI, UART, LED, RAM)
+        .M_COUNT(5), // 5 Slaves (SPI, UART, LED, RAM,VRAM)
         .DATA_WIDTH(32),
         .ADDR_WIDTH(32),
         // Define the memory map: {Slave 3, Slave 2, Slave 1, Slave 0}
-        .M_BASE_ADDR  ({32'h3000_0000, 32'h2000_0000, 32'h1000_0000, 32'h0000_0000}),
-        .M_ADDR_WIDTH ({32'd16,        32'd16,        32'd16,        32'd16}) // Give each slave a 64KB address space
+        .M_BASE_ADDR  ({32'h4000_0000,32'h3000_0000, 32'h2000_0000, 32'h1000_0000, 32'h0000_0000}),
+        .M_ADDR_WIDTH ({32'd16,  32'd16,        32'd16,        32'd16,        32'd16}) // Give each slave a 64KB address space
     ) axi_router (
         .clk(clk),
         .rst(!resetn), // Crossbar usually takes active-high reset
@@ -134,29 +143,29 @@ module top (
         .s_axil_rvalid (mem_axi_rvalid),  .s_axil_rready (mem_axi_rready),
 
         // Slave Outputs (Concatenated as {SPI, UART, LED, RAM})
-        .m_axil_awaddr ({spi_awaddr,  uart_awaddr,  led_awaddr,  ram_awaddr}),
-        .m_axil_awprot ({spi_awprot,  uart_awprot,  led_awprot,  ram_awprot}),
-        .m_axil_awvalid({spi_awvalid, uart_awvalid, led_awvalid, ram_awvalid}),
-        .m_axil_awready({spi_awready, uart_awready, led_awready, ram_awready}),
+        .m_axil_awaddr ({vram_awaddr, spi_awaddr,  uart_awaddr,  led_awaddr,  ram_awaddr}),
+        .m_axil_awprot ({vram_awprot, spi_awprot,  uart_awprot,  led_awprot,  ram_awprot}),
+        .m_axil_awvalid({vram_awvalid, spi_awvalid, uart_awvalid, led_awvalid, ram_awvalid}),
+        .m_axil_awready({vram_awready, spi_awready, uart_awready, led_awready, ram_awready}),
         
-        .m_axil_wdata  ({spi_wdata,   uart_wdata,   led_wdata,   ram_wdata}),
-        .m_axil_wstrb  ({spi_wstrb,   uart_wstrb,   led_wstrb,   ram_wstrb}),
-        .m_axil_wvalid ({spi_wvalid,  uart_wvalid,  led_wvalid,  ram_wvalid}),
-        .m_axil_wready ({spi_wready,  uart_wready,  led_wready,  ram_wready}),
+        .m_axil_wdata  ({vram_wdata, spi_wdata,   uart_wdata,   led_wdata,   ram_wdata}),
+        .m_axil_wstrb  ({vram_wstrb, spi_wstrb,   uart_wstrb,   led_wstrb,   ram_wstrb}),
+        .m_axil_wvalid ({vram_wvalid, spi_wvalid,  uart_wvalid,  led_wvalid,  ram_wvalid}),
+        .m_axil_wready ({vram_wready, spi_wready,  uart_wready,  led_wready,  ram_wready}),
         
-        .m_axil_bresp  ({spi_bresp,   uart_bresp,   led_bresp,   ram_bresp}),
-        .m_axil_bvalid ({spi_bvalid,  uart_bvalid,  led_bvalid,  ram_bvalid}),
-        .m_axil_bready ({spi_bready,  uart_bready,  led_bready,  ram_bready}),
+        .m_axil_bresp  ({vram_bresp, spi_bresp,   uart_bresp,   led_bresp,   ram_bresp}),
+        .m_axil_bvalid ({vram_bvalid, spi_bvalid,  uart_bvalid,  led_bvalid,  ram_bvalid}),
+        .m_axil_bready ({vram_bready, spi_bready,  uart_bready,  led_bready,  ram_bready}),
         
-        .m_axil_araddr ({spi_araddr,  uart_araddr,  led_araddr,  ram_araddr}),
-        .m_axil_arprot ({spi_arprot,  uart_arprot,  led_arprot,  ram_arprot}),
-        .m_axil_arvalid({spi_arvalid, uart_arvalid, led_arvalid, ram_arvalid}),
-        .m_axil_arready({spi_arready, uart_arready, led_arready, ram_arready}),
+        .m_axil_araddr ({vram_araddr, spi_araddr,  uart_araddr,  led_araddr,  ram_araddr}),
+        .m_axil_arprot ({vram_arprot, spi_arprot,  uart_arprot,  led_arprot,  ram_arprot}),
+        .m_axil_arvalid({vram_arvalid, spi_arvalid, uart_arvalid, led_arvalid, ram_arvalid}),
+        .m_axil_arready({vram_arready, spi_arready, uart_arready, led_arready, ram_arready}),
         
-        .m_axil_rdata  ({spi_rdata,   uart_rdata,   led_rdata,   ram_rdata}),
-        .m_axil_rresp  ({spi_rresp,   uart_rresp,   led_rresp,   ram_rresp}),
-        .m_axil_rvalid ({spi_rvalid,  uart_rvalid,  led_rvalid,  ram_rvalid}),
-        .m_axil_rready ({spi_rready,  uart_rready,  led_rready,  ram_rready})
+        .m_axil_rdata  ({vram_rdata, spi_rdata,   uart_rdata,   led_rdata,   ram_rdata}),
+        .m_axil_rresp  ({vram_rresp, spi_rresp,   uart_rresp,   led_rresp,   ram_rresp}),
+        .m_axil_rvalid ({vram_rvalid, spi_rvalid,  uart_rvalid,  led_rvalid,  ram_rvalid}),
+        .m_axil_rready ({vram_rready, spi_rready,  uart_rready,  led_rready,  ram_rready})
     );
 
    
@@ -202,7 +211,7 @@ module top (
     // ------------------------------------------
     reg [31:0] memory [0:2047];
     initial begin
-        $readmemh("bootloader.hex", memory);
+        $readmemh("C:/Users/srsha/Desktop/IEEE_projects/Nexus-V/firmware/bootloader.hex", memory);
     end
 
     // RAM Write Channel (Independent Latching)
@@ -437,7 +446,104 @@ module top (
         .o_SPI_CS_n (spi_cs_n)
     );
 
+    // --- Slave 4: VRAM Wires ---
+    wire [31:0] vram_awaddr; wire [2:0] vram_awprot; wire vram_awvalid; wire vram_awready;
+    wire [31:0] vram_wdata;  wire [3:0] vram_wstrb;  wire vram_wvalid;  wire vram_wready;
+    wire [1:0]  vram_bresp;  wire vram_bvalid;       wire vram_bready;
+    wire [31:0] vram_araddr; wire [2:0] vram_arprot; wire vram_arvalid; wire vram_arready;
+    reg  [31:0] vram_rdata;  wire [1:0] vram_rresp;  wire vram_rvalid;  wire vram_rready;
+
+    // ==========================================
+    // 5. AXI-Lite VRAM (Dual Port) & VGA Driver
+    // ==========================================
+    reg [7:0] video_ram [0:511]; // 512 bytes is plenty for our 300 blocks
+    // Initialize VRAM to 0 (Black) for simulation safety
+    integer i;
+    initial begin
+        for (i = 0; i < 512; i = i + 1) begin
+            video_ram[i] = 8'h00;
+        end
+    end
+    // --- Port A: CPU Write via AXI (Simplified AXI-Lite Wrapper) ---
+    reg vram_aw_latched, vram_w_latched, vram_bvalid_reg;
+    reg [31:0] vram_awaddr_reg;
+    reg [31:0] vram_wdata_reg; 
+    reg [3:0]  vram_wstrb_reg; // <--- ADD THIS
     
+    assign vram_awready = !vram_aw_latched && !vram_bvalid_reg;
+    assign vram_wready  = !vram_w_latched  && !vram_bvalid_reg;
+    assign vram_bvalid  = vram_bvalid_reg;
+    assign vram_bresp   = 2'b00;
+
+    always @(posedge clk) begin
+        if (!resetn) begin
+            vram_aw_latched <= 0; vram_w_latched <= 0; vram_bvalid_reg <= 0;
+        end else begin
+            if (vram_awvalid && vram_awready) begin
+                vram_awaddr_reg <= vram_awaddr;
+                vram_aw_latched <= 1;
+            end
+            if (vram_wvalid && vram_wready) begin
+                vram_wdata_reg <= vram_wdata; 
+                vram_wstrb_reg <= vram_wstrb; // <--- LATCH THE STROBE
+                vram_w_latched <= 1;
+            end
+            if (vram_aw_latched && vram_w_latched && !vram_bvalid_reg) begin
+                
+                // ✅ CORRECT: Mask off the lower 2 bits of the address and add the specific lane offset
+                if (vram_wstrb_reg[0]) video_ram[{vram_awaddr_reg[8:2], 2'b00}] <= vram_wdata_reg[7:0]; 
+                if (vram_wstrb_reg[1]) video_ram[{vram_awaddr_reg[8:2], 2'b01}] <= vram_wdata_reg[15:8]; 
+                if (vram_wstrb_reg[2]) video_ram[{vram_awaddr_reg[8:2], 2'b10}] <= vram_wdata_reg[23:16]; 
+                if (vram_wstrb_reg[3]) video_ram[{vram_awaddr_reg[8:2], 2'b11}] <= vram_wdata_reg[31:24]; 
+                
+                vram_bvalid_reg <= 1;
+            end else if (vram_bvalid_reg && vram_bready) begin
+                vram_bvalid_reg <= 0; vram_aw_latched <= 0; vram_w_latched <= 0;
+            end
+        end
+    end
+
+    // VRAM Read Channel (Dummy response, CPU shouldn't need to read screen memory)
+    reg vram_rvalid_reg;
+    assign vram_arready = !vram_rvalid_reg || vram_rready;
+
+    assign vram_rvalid  = vram_rvalid_reg;
+    assign vram_rresp   = 2'b00;
+
+    always @(posedge clk) begin
+        if (!resetn) vram_rvalid_reg <= 1'b0;
+        else begin
+            if (vram_arvalid && vram_arready) begin
+                vram_rdata <= 32'h0; // Dummy read data
+                vram_rvalid_reg <= 1'b1;
+            end else if (vram_rready) begin
+                vram_rvalid_reg <= 1'b0;
+            end
+        end
+    end
+    
+
+    // --- Port B: VGA Read & Driver ---
+    wire [8:0] vga_read_addr;
+    reg  [7:0] vga_read_data;
+
+    // UPDATED: Now runs on the main 100MHz clock!
+    always @(posedge clk) begin
+        vga_read_data <= video_ram[vga_read_addr];
+    end
+
+    // UPDATED: Port mappings match the new 100MHz CE VGA Driver
+    vga_driver vga_inst (
+        .clk_100(clk),             // Feed the 100MHz system clock
+        .resetn(resetn),           // Active-low reset
+        .vram_data(vga_read_data), // Pixel color from VRAM
+        .vram_addr(vga_read_addr), // Address request from VGA
+        .vga_r(vga_r),
+        .vga_g(vga_g),
+        .vga_b(vga_b),
+        .hsync(vga_hs),
+        .vsync(vga_vs)
+    );
 endmodule
 
 
