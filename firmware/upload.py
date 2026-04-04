@@ -3,6 +3,7 @@ import sys
 import time
 
 def upload_firmware(com_port, bin_file):
+    ser = None  # Safely initialize this so the 'finally' block doesn't crash
     try:
         with open(bin_file, 'rb') as f:
             firmware_data = f.read()
@@ -12,7 +13,17 @@ def upload_firmware(com_port, bin_file):
 
         print(f"[*] Opening {com_port} at 115200 baud...")
         ser = serial.Serial(com_port, 115200, timeout=5)
-        time.sleep(1)
+        
+        # ==========================================
+        # NEW: Software Reset Sequence
+        # ==========================================
+        print("[*] Sending Soft-Reset command (0x7F)...")
+        ser.write(b'\x7F') 
+        time.sleep(0.5) # Give the FPGA 500ms to jump to 0x00000000 and initialize
+        
+        # Flush the buffer just in case the app sent any garbage while dying
+        ser.reset_input_buffer() 
+        # ==========================================
 
         print("[*] Sending Upload Command ('U')...")
         ser.write(b'U')
@@ -31,10 +42,15 @@ def upload_firmware(com_port, bin_file):
         else:
             print(f"[-] ERROR: Expected 'K', got: {ack}")
 
-        ser.close()
-
     except Exception as e:
         print(f"[-] FAILED: {e}")
+        if "Access is denied" in str(e):
+            print("    -> Make sure PuTTY or Vivado isn't holding COM6 hostage!")
+
+    finally:
+        # This guarantees the port is released, even if an error happened
+        if ser is not None and ser.is_open:
+            ser.close()
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
