@@ -1,5 +1,6 @@
 /*
 #include <stdint.h>
+/* #include <stdint.h>
 
 #define LED_REG     (*(volatile uint32_t*)0x10000000)
 #define UART_DATA   (*(volatile uint32_t*)0x20000000)

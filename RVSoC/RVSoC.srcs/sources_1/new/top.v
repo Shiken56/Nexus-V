@@ -202,7 +202,7 @@ module top (
     // ------------------------------------------
     reg [31:0] memory [0:2047];
     initial begin
-        $readmemh("C:/Users/srsha/Desktop/IEEE_projects/Nexus-V/firmware/bootloader.hex", memory);
+        $readmemh("bootloader.hex", memory);
     end
 
     // RAM Write Channel (Independent Latching)
