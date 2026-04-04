@@ -564,6 +564,9 @@ int main() {
     return 0;
 }
 */
+
+//Basic Maze with pixel at center
+/*
 #include <stdint.h>
 
 // --- AXI Memory Map Addresses ---
@@ -703,16 +706,188 @@ int main() {
 
         // Map tilt to screen. Try changing '4' to a smaller number 
         // (like 2) if it's too sluggish, or larger (like 8) if it's too twitchy!
-        int cursor_x = 9 + (x / 8); 
-        int cursor_y = 7 + (y / 8);
+        int cursor_x = 9 + (x / 16); 
+        int cursor_y = 7 + (y / 16);
 
         cursor_x = clamp(cursor_x, 0, 19);
         cursor_y = clamp(cursor_y, 0, 14);
 
         draw_background(); 
-        vram[cursor_y * 20 + cursor_x] = COLOR_YELLOW;
+        vram[cursor_y * 20 + cursor_x] = COLOR_GREEN;
 
         responsive_delay(50000); 
+    }
+
+    return 0;
+}
+*/
+#include <stdint.h>
+
+// --- AXI Memory Map Addresses ---
+#define VRAM_BASE 0x40000000
+#define UART_BASE 0x20000000
+#define SPI_BASE  0x30000000
+
+volatile uint8_t* const vram       = (volatile uint8_t*)VRAM_BASE;
+volatile uint32_t* const uart_data = (volatile uint32_t*)UART_BASE;
+volatile uint32_t* const uart_stat = (volatile uint32_t*)(UART_BASE + 4);
+volatile uint32_t* const spi_data  = (volatile uint32_t*)SPI_BASE;
+volatile uint32_t* const spi_ctrl  = (volatile uint32_t*)(SPI_BASE + 4);
+
+// --- Fast Pseudo-Random Number Generator ---
+static uint32_t rand_state = 123456789;
+uint32_t xorshift32() {
+    rand_state ^= rand_state << 13;
+    rand_state ^= rand_state >> 17;
+    rand_state ^= rand_state << 5;
+    return rand_state;
+}
+
+// --- Soft Reset & Delay ---
+void software_reset() {
+    void (*bootloader)(void) = (void (*)(void))0x00000000;
+    bootloader();
+}
+
+void check_reboot() {
+    if ((*uart_stat) & 0x02) { 
+        if (((*uart_data) & 0xFF) == 0x7F) software_reset();
+    }
+}
+
+void responsive_delay(int cycles) {
+    for (volatile int i = 0; i < cycles; i++) check_reboot();
+}
+
+// --- SPI & ADXL362 FUNCTIONS ---
+void wait_spi_ready() { while (((*spi_ctrl) & 0x01) == 0); }
+
+unsigned int spi_transfer(unsigned int d) {
+    wait_spi_ready();
+    volatile unsigned int dummy = *spi_data; (void)dummy;
+    *spi_data = d;
+    while (((*spi_ctrl) & 0x02) == 0);
+    return (*spi_data) & 0xFF;
+}
+
+void spi_cs_low()  { wait_spi_ready(); *spi_ctrl = 0x00; }
+void spi_cs_high() { wait_spi_ready(); *spi_ctrl = 0x02; }
+
+void adxl_write_reg(unsigned int reg, unsigned int val) {
+    spi_cs_low(); spi_transfer(0x0A); spi_transfer(reg); spi_transfer(val); spi_cs_high();
+}
+
+void read_xyz(int *x, int *y, int *z) {
+    spi_cs_low(); spi_transfer(0x0B); spi_transfer(0x08);
+    *x = (signed char)spi_transfer(0x00);
+    *y = (signed char)spi_transfer(0x00);
+    *z = (signed char)spi_transfer(0x00);
+    spi_cs_high();
+}
+
+// --- GRAPHICS & PHYSICS CONSTANTS ---
+// We use a custom Fire Palette: Black -> Dim Red -> Bright Red -> Orange -> Yellow -> White
+const uint8_t palette[6] = {0x00, 0x80, 0xE0, 0xEC, 0xFC, 0xFF};
+
+// A local framebuffer to hold the "heat" of each pixel (0 to 5)
+uint8_t framebuffer[300] = {0}; 
+
+int main() {
+    spi_cs_high();
+    responsive_delay(100000);
+
+    // 1. Init Sensor
+    unsigned int id = 0;
+    while (id != 0xAD) { 
+        spi_cs_low(); spi_transfer(0x0B); spi_transfer(0x00); id = spi_transfer(0x00); spi_cs_high();
+        for(int i=0; i<300; i++) vram[i] = 0xE0; // Red if missing
+        responsive_delay(50000);
+    }
+
+    adxl_write_reg(0x2D, 0x02); // Enable ADXL362
+
+    // 2. Calibrate
+    for(int i=0; i<300; i++) vram[i] = 0x03; // Blue for calibration
+    int x_off = 0, y_off = 0, z_off = 0;
+    int x, y, z;
+    for (int i = 0; i < 100; i++) {
+        read_xyz(&x, &y, &z);
+        x_off += x; y_off += y; z_off += z;
+        responsive_delay(10000);
+    }
+    x_off /= 100; y_off /= 100; z_off /= 100;
+
+    // 3. Physics Variables
+    // We use "Fixed Point Math" (value * 256) so we can have smooth sub-pixel velocity!
+    int pos_x = (9 << 8);  // Start in middle (x=9)
+    int pos_y = (7 << 8);  // Start in middle (y=7)
+    int vel_x = 0;
+    int vel_y = 0;
+    
+    int prev_x = 0, prev_y = 0, prev_z = 0;
+
+    // 4. MAIN LOOP
+    while (1) {
+        check_reboot();
+
+        // Read Sensor
+        read_xyz(&x, &y, &z);
+        int clean_x = x - x_off;
+        int clean_y = y - y_off;
+
+        // -- SHAKE DETECTION --
+        int dx = x - prev_x; int dy = y - prev_y; int dz = z - prev_z;
+        int motion = dx*dx + dy*dy + dz*dz;
+        
+        if (motion > 2500) { 
+            // EXPLOSION! Randomize the entire screen's heat
+            for(int i=0; i<300; i++) framebuffer[i] = (xorshift32() % 6);
+        }
+        prev_x = x; prev_y = y; prev_z = z;
+
+        // -- PHYSICS ENGINE --
+        // Accelerometer acts as gravity
+        vel_x += clean_x; 
+        vel_y += clean_y;
+
+        // Apply friction/air resistance (multiply by 0.98 essentially)
+        vel_x = (vel_x * 250) >> 8; 
+        vel_y = (vel_y * 250) >> 8;
+
+        // Update position
+        pos_x += vel_x;
+        pos_y += vel_y;
+
+        // Collision detection with screen boundaries (with bouncy energy loss)
+        if (pos_x < 0) { pos_x = 0; vel_x = -vel_x / 2; }
+        if (pos_x >= (19 << 8)) { pos_x = (19 << 8); vel_x = -vel_x / 2; }
+        
+        if (pos_y < 0) { pos_y = 0; vel_y = -vel_y / 2; }
+        if (pos_y >= (14 << 8)) { pos_y = (14 << 8); vel_y = -vel_y / 2; }
+
+        // -- GRAPHICS ENGINE --
+        // 1. Cool down the trail
+        for(int i=0; i<300; i++) {
+            if (framebuffer[i] > 0) {
+                // Randomly decay the pixels to create a flickering fire effect
+                if ((xorshift32() & 0x03) != 0) { 
+                    framebuffer[i]--; 
+                }
+            }
+        }
+
+        // 2. Draw the ball at maximum heat (5)
+        int draw_x = pos_x >> 8;
+        int draw_y = pos_y >> 8;
+        framebuffer[draw_y * 20 + draw_x] = 5;
+
+        // 3. Blit (Copy) the local framebuffer to the actual VGA VRAM using the color palette
+        for(int i=0; i<300; i++) {
+            vram[i] = palette[framebuffer[i]];
+        }
+
+        // Delay to set framerate (adjust to make it faster/slower)
+        responsive_delay(30000); 
     }
 
     return 0;
