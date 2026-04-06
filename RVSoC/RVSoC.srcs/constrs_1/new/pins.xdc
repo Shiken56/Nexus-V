@@ -1,3 +1,6 @@
+#set_property -dict { PACKAGE_PIN E3    IOSTANDARD LVCMOS33 } [get_ports clk]; #IO_L12P_T1_MRCC_35 Sch=clk100mhz
+create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports clk];
+
 set_property PACKAGE_PIN E3 [get_ports clk]
 set_property PACKAGE_PIN C12 [get_ports resetn]
 
@@ -26,6 +29,46 @@ set_property PACKAGE_PIN C4 [get_ports uart_rx]
 set_property IOSTANDARD LVCMOS33 [get_ports uart_rx]
 set_property IOSTANDARD LVCMOS33 [get_ports uart_tx]
 
+
+# --- ADXL362 SPI Accelerometer Pins ---
+set_property PACKAGE_PIN F15 [get_ports spi_clk]
+set_property IOSTANDARD LVCMOS33 [get_ports spi_clk]
+
+set_property PACKAGE_PIN F14 [get_ports spi_mosi]
+set_property IOSTANDARD LVCMOS33 [get_ports spi_mosi]
+
+set_property PACKAGE_PIN E15 [get_ports spi_miso]
+set_property IOSTANDARD LVCMOS33 [get_ports spi_miso]
+
+set_property PACKAGE_PIN D15 [get_ports spi_cs_n]
+set_property IOSTANDARD LVCMOS33 [get_ports spi_cs_n]
+
+# --- VGA Output Pins ---
+set_property PACKAGE_PIN A3  [get_ports {vga_r[0]}]
+set_property PACKAGE_PIN B4  [get_ports {vga_r[1]}]
+set_property PACKAGE_PIN C5  [get_ports {vga_r[2]}]
+set_property PACKAGE_PIN A4  [get_ports {vga_r[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {vga_r[*]}]
+
+set_property PACKAGE_PIN C6  [get_ports {vga_g[0]}]
+set_property PACKAGE_PIN A5  [get_ports {vga_g[1]}]
+set_property PACKAGE_PIN B6  [get_ports {vga_g[2]}]
+set_property PACKAGE_PIN A6  [get_ports {vga_g[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {vga_g[*]}]
+
+set_property PACKAGE_PIN B7  [get_ports {vga_b[0]}]
+set_property PACKAGE_PIN C7  [get_ports {vga_b[1]}]
+set_property PACKAGE_PIN D7  [get_ports {vga_b[2]}]
+set_property PACKAGE_PIN D8  [get_ports {vga_b[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {vga_b[*]}]
+
+set_property PACKAGE_PIN B11 [get_ports vga_hs]
+set_property IOSTANDARD LVCMOS33 [get_ports vga_hs]
+
+set_property PACKAGE_PIN B12 [get_ports vga_vs]
+set_property IOSTANDARD LVCMOS33 [get_ports vga_vs]
+
+# Temp sensor ADT7420 I2C Pins
 set_property PACKAGE_PIN C14 [get_ports scl]
 set_property PACKAGE_PIN C15 [get_ports sda]
 set_property IOSTANDARD LVCMOS33 [get_ports scl]

@@ -1,29 +1,31 @@
-`timescale 1ns / 1ps
-
 module top (
-    input  clk,           // 100MHz clock from Nexys 4 DDR
-    input  resetn,        // Active-low reset (CPU_RESET button)
-    output [7:0] led,     // 8 LEDs on the board
-    output uart_tx,       // FPGA TX Pin
-    input  uart_rx        // FPGA RX Pin
+    input  clk,           
+    input  resetn,        
+    output [7:0] led,     
+    output uart_tx,       
+    input  uart_rx,       
+    output spi_clk,
+    output spi_mosi,
+    input  spi_miso,
+    output spi_cs_n,
+    // --- NEW: VGA Pins ---
+    output [3:0] vga_r,
+    output [3:0] vga_g,
+    output [3:0] vga_b,
+    output vga_hs,
+    output vga_vs
 
     // I2C Ports
     inout sda,
     inout scl
 );
-
-    // --- PicoRV32 Native Interface Signals ---
-    wire        mem_valid;
-    wire        mem_instr;
-    reg         mem_ready;
-    wire [31:0] mem_addr;
-    wire [31:0] mem_wdata;
-    wire [3:0]  mem_wstrb;
-    reg  [31:0] mem_rdata;
-
-<<<<<<< Updated upstream
-=======
-
+    reg [1:0] clk_div;
+    wire clk_25 = clk_div[1]; // Divides 100MHz by 4 to get 25MHz
+    always @(posedge clk) begin
+        if (!resetn) clk_div <= 0;
+        else clk_div <= clk_div + 1;
+    end
+    
     // --- PicoRV32 AXI4-Lite Master Signals ---
     // 1. AW Channel (Address Write)
     wire        mem_axi_awvalid;
@@ -38,8 +40,8 @@ module top (
     wire [ 3:0] mem_axi_wstrb;
 
     // 3. B Channel (Write Response)
-    wire        mem_axi_bvalid;
-    wire        mem_axi_bready;
+    wire        mem_axi_bvalid; 
+    wire        mem_axi_bready; 
 
     // 4. AR Channel (Address Read)
     wire        mem_axi_arvalid;
@@ -112,7 +114,14 @@ module top (
     wire [31:0] uart_araddr; wire [2:0] uart_arprot; wire uart_arvalid; wire uart_arready;
     reg  [31:0] uart_rdata;  wire [1:0] uart_rresp;  wire uart_rvalid;  wire uart_rready;
 
-    // --- Slave 3: I2C Wires ---
+    // --- Slave 3: SPI Wires ---
+    wire [31:0] spi_awaddr;  wire [2:0] spi_awprot;  wire spi_awvalid; wire spi_awready;
+    wire [31:0] spi_wdata;   wire [3:0] spi_wstrb;   wire spi_wvalid;  wire spi_wready;
+    wire [1:0]  spi_bresp;   wire spi_bvalid;        wire spi_bready;
+    wire [31:0] spi_araddr;  wire [2:0] spi_arprot;  wire spi_arvalid; wire spi_arready;
+    wire [31:0] spi_rdata;   wire [1:0] spi_rresp;   wire spi_rvalid;  wire spi_rready;
+
+    // --- Slave 5: I2C Wires ---
     wire [31:0] i2c_awaddr;  wire [2:0] i2c_awprot;  wire i2c_awvalid;  wire i2c_awready;
     wire [31:0] i2c_wdata;   wire [3:0] i2c_wstrb;   wire i2c_wvalid;   wire i2c_wready;
     wire [1:0]  i2c_bresp;   wire i2c_bvalid;        wire i2c_bready;
@@ -122,12 +131,12 @@ module top (
     // --- Instantiate Alex Forencich's AXI-Lite Crossbar ---
     axil_crossbar #(
         .S_COUNT(1), // 1 Master (CPU)
-        .M_COUNT(4), // 4 Slaves (I2C, UART, LED, RAM)
+        .M_COUNT(6), // 5 Slaves (I2C, SPI, UART, LED, RAM,VRAM)
         .DATA_WIDTH(32),
         .ADDR_WIDTH(32),
-        // Define the memory map: {Slave 2, Slave 1, Slave 0}
-        .M_BASE_ADDR  ({32'h3000_0000, 32'h2000_0000, 32'h1000_0000, 32'h0000_0000}),
-        .M_ADDR_WIDTH ({32'd16,        32'd16,        32'd16,        32'd16}) // Give each slave a 64KB address space
+        // Define the memory map: {Slave 5(I2C), Slave 4(VGA), Slave 3, Slave 2, Slave 1, Slave 0}
+        .M_BASE_ADDR  ({32'h5000_0000, 32'h4000_0000,32'h3000_0000, 32'h2000_0000, 32'h1000_0000, 32'h0000_0000}),
+        .M_ADDR_WIDTH ({32'd16, 32'd16,  32'd16,        32'd16,        32'd16,        32'd16}) // Give each slave a 64KB address space
     ) axi_router (
         .clk(clk),
         .rst(!resetn), // Crossbar usually takes active-high reset
@@ -144,34 +153,33 @@ module top (
         .s_axil_rdata  (mem_axi_rdata),   .s_axil_rresp  (),               // CPU ignores rresp
         .s_axil_rvalid (mem_axi_rvalid),  .s_axil_rready (mem_axi_rready),
 
-        // Slave Outputs (Concatenated as {I2C, UART, LED, RAM})
-        .m_axil_awaddr ({i2c_awaddr,  uart_awaddr,  led_awaddr,  ram_awaddr}),
-        .m_axil_awprot ({i2c_awprot,  uart_awprot,  led_awprot,  ram_awprot}),
-        .m_axil_awvalid({i2c_awvalid, uart_awvalid, led_awvalid, ram_awvalid}),
-        .m_axil_awready({i2c_awready, uart_awready, led_awready, ram_awready}),
+        // Slave Outputs (Concatenated as {I2C, VGA, SPI, UART, LED, RAM})
+        .m_axil_awaddr ({i2c_awaddr, vram_awaddr, spi_awaddr,  uart_awaddr,  led_awaddr,  ram_awaddr}),
+        .m_axil_awprot ({i2c_awprot, vram_awprot, spi_awprot,  uart_awprot,  led_awprot,  ram_awprot}),
+        .m_axil_awvalid({i2c_awvalid, vram_awvalid, spi_awvalid, uart_awvalid, led_awvalid, ram_awvalid}),
+        .m_axil_awready({i2c_awready, vram_awready, spi_awready, uart_awready, led_awready, ram_awready}),
         
-        .m_axil_wdata  ({i2c_wdata,  uart_wdata,   led_wdata,   ram_wdata}),
-        .m_axil_wstrb  ({i2c_wstrb,  uart_wstrb,   led_wstrb,   ram_wstrb}),
-        .m_axil_wvalid ({i2c_wvalid, uart_wvalid,  led_wvalid,  ram_wvalid}),
-        .m_axil_wready ({i2c_wready, uart_wready,  led_wready,  ram_wready}),
+        .m_axil_wdata  ({i2c_wdata, vram_wdata, spi_wdata,   uart_wdata,   led_wdata,   ram_wdata}),
+        .m_axil_wstrb  ({i2c_wstrb, vram_wstrb, spi_wstrb,   uart_wstrb,   led_wstrb,   ram_wstrb}),
+        .m_axil_wvalid ({i2c_wvalid, vram_wvalid, spi_wvalid,  uart_wvalid,  led_wvalid,  ram_wvalid}),
+        .m_axil_wready ({i2c_wready, vram_wready, spi_wready,  uart_wready,  led_wready,  ram_wready}),
         
-        .m_axil_bresp  ({i2c_bresp,  uart_bresp,   led_bresp,   ram_bresp}),
-        .m_axil_bvalid ({i2c_bvalid, uart_bvalid,  led_bvalid,  ram_bvalid}),
-        .m_axil_bready ({i2c_bready, uart_bready,  led_bready,  ram_bready}),
+        .m_axil_bresp  ({i2c_bresp, vram_bresp, spi_bresp,   uart_bresp,   led_bresp,   ram_bresp}),
+        .m_axil_bvalid ({i2c_bvalid, vram_bvalid, spi_bvalid,  uart_bvalid,  led_bvalid,  ram_bvalid}),
+        .m_axil_bready ({i2c_bready, vram_bready, spi_bready,  uart_bready,  led_bready,  ram_bready}),
         
-        .m_axil_araddr ({i2c_araddr,  uart_araddr,  led_araddr,  ram_araddr}),
-        .m_axil_arprot ({i2c_arprot,  uart_arprot,  led_arprot,  ram_arprot}),
-        .m_axil_arvalid({i2c_arvalid, uart_arvalid, led_arvalid, ram_arvalid}),
-        .m_axil_arready({i2c_arready, uart_arready, led_arready, ram_arready}),
+        .m_axil_araddr ({i2c_araddr, vram_araddr, spi_araddr,  uart_araddr,  led_araddr,  ram_araddr}),
+        .m_axil_arprot ({i2c_arprot, vram_arprot, spi_arprot,  uart_arprot,  led_arprot,  ram_arprot}),
+        .m_axil_arvalid({i2c_arvalid, vram_arvalid, spi_arvalid, uart_arvalid, led_arvalid, ram_arvalid}),
+        .m_axil_arready({i2c_arready, vram_arready, spi_arready, uart_arready, led_arready, ram_arready}),
         
-        .m_axil_rdata  ({i2c_rdata,  uart_rdata,   led_rdata,   ram_rdata}),
-        .m_axil_rresp  ({i2c_rresp, uart_rresp,   led_rresp,   ram_rresp}),
-        .m_axil_rvalid ({i2c_rvalid, uart_rvalid,  led_rvalid,  ram_rvalid}),
-        .m_axil_rready ({i2c_rready, uart_rready,  led_rready,  ram_rready})
+        .m_axil_rdata  ({i2c_rdata, vram_rdata, spi_rdata,   uart_rdata,   led_rdata,   ram_rdata}),
+        .m_axil_rresp  ({i2c_rresp, vram_rresp, spi_rresp,   uart_rresp,   led_rresp,   ram_rresp}),
+        .m_axil_rvalid ({i2c_rvalid, vram_rvalid, spi_rvalid,  uart_rvalid,  led_rvalid,  ram_rvalid}),
+        .m_axil_rready ({i2c_rready, vram_rready, spi_rready,  uart_rready,  led_rready,  ram_rready})
     );
 
    
->>>>>>> Stashed changes
     // --- UART AXI-Stream Bridge Wires ---
     wire [7:0] uart_rx_tdata;
     wire       uart_rx_tvalid;
@@ -182,39 +190,13 @@ module top (
     // Prescale for 115200 baud: 100MHz / (115200 * 8) = 108
     wire [15:0] uart_prescale = 16'd108; 
 
-    // --- Instantiate the PicoRV32 Core ---
-    picorv32 #(
-        .PROGADDR_RESET(32'h 0000_0000), 
-        .STACKADDR(32'h 0000_1000)       
-    ) cpu (
-        .clk(clk),
-        .resetn(resetn),
-        .trap(), 
-        .mem_valid(mem_valid),
-        .mem_instr(mem_instr),
-        .mem_ready(mem_ready),
-        .mem_addr(mem_addr),
-        .mem_wdata(mem_wdata),
-        .mem_wstrb(mem_wstrb),
-        .mem_rdata(mem_rdata)
-    );
-
-    // --- 4KB Block RAM (1024 words x 32 bits) ---
-    reg [31:0] memory [0:1023];
-    initial begin
-        $readmemh("firmware.hex", memory);
-    end
-
-    // --- 8-Bit LED Register ---
-    reg [7:0] led_reg;
-    assign led = led_reg;
+    reg [7:0]  tx_data_reg; // Holds data for the physical UART IP
 
     // --- Instantiate Alex Forencich UART ---
-    // Ensure uart.v, uart_tx.v, and uart_rx.v are in your project
     uart #( .DATA_WIDTH(8) ) uart_inst (
         .clk(clk),
         .rst(!resetn), // Active-high reset for the UART module
-        .s_axis_tdata(mem_wdata[7:0]),
+        .s_axis_tdata(tx_data_reg),  
         .s_axis_tvalid(uart_tx_tvalid),
         .s_axis_tready(uart_tx_tready),
         .m_axis_tdata(uart_rx_tdata),
@@ -227,74 +209,182 @@ module top (
         .prescale(uart_prescale)
     );
 
-    // --- Memory Routing & Control Logic ---
+    // --- 8-Bit LED Register ---
+    reg [7:0] led_reg;
+    assign led = led_reg;
+
+    // ==========================================
+    // PHASE 3: BULLETPROOF AXI-LITE WRAPPERS
+    // ==========================================
+
+    // ------------------------------------------
+    // 1. AXI-Lite RAM (8KB)
+    // ------------------------------------------
+    reg [31:0] memory [0:2047];
+    initial begin
+        $readmemh("C:/Users/srsha/Desktop/IEEE_projects/Nexus-V/firmware/bootloader.hex", memory);
+    end
+
+    // RAM Write Channel (Independent Latching)
+    reg ram_aw_latched, ram_w_latched, ram_bvalid_reg;
+    reg [31:0] ram_awaddr_reg, ram_wdata_reg;
+    reg [3:0]  ram_wstrb_reg;
+
+    assign ram_awready = !ram_aw_latched && !ram_bvalid_reg;
+    assign ram_wready  = !ram_w_latched  && !ram_bvalid_reg;
+    assign ram_bvalid  = ram_bvalid_reg;
+    assign ram_bresp   = 2'b00;
+
     always @(posedge clk) begin
         if (!resetn) begin
-            mem_ready <= 0;
-            led_reg   <= 8'b00000000;
-            uart_tx_tvalid <= 0;
-            uart_rx_tready <= 0;
+            ram_aw_latched <= 0; ram_w_latched <= 0; ram_bvalid_reg <= 0;
         end else begin
-            mem_ready <= 0;
-            uart_tx_tvalid <= 0;
-            uart_rx_tready <= 0;
-
-            if (mem_valid && !mem_ready) begin
-                
-                // 1. RAM Access (0x0000_0000 to 0x0000_0FFF)
-                if (mem_addr < 32'h0000_1000) begin
-                    mem_ready <= 1;
-                    if (mem_wstrb[0]) memory[mem_addr[11:2]][7:0]   <= mem_wdata[7:0];
-                    if (mem_wstrb[1]) memory[mem_addr[11:2]][15:8]  <= mem_wdata[15:8];
-                    if (mem_wstrb[2]) memory[mem_addr[11:2]][23:16] <= mem_wdata[23:16];
-                    if (mem_wstrb[3]) memory[mem_addr[11:2]][31:24] <= mem_wdata[31:24];
-                    mem_rdata <= memory[mem_addr[11:2]];
-                end
-                
-                // 2. LED Address (0x1000_0000)
-                else if (mem_addr == 32'h1000_0000) begin
-                    mem_ready <= 1;
-                    if (mem_wstrb != 0) begin
-                        led_reg <= mem_wdata[7:0]; // FIXED: Capture all 8 bits
-                    end
-                    mem_rdata <= {24'b0, led_reg};
-                end
-                
-                // 3. UART Peripheral (0x2000_0000)
-                else if (mem_addr[31:4] == 28'h2000000) begin
-                    case (mem_addr[3:0])
-                        4'h0: begin // UART DATA
-                            if (mem_wstrb != 0) begin
-                                if (uart_tx_tready) begin
-                                    uart_tx_tvalid <= 1;
-                                    mem_ready <= 1;
-                                end
-                            end else begin
-                                mem_rdata <= {24'b0, uart_rx_tdata};
-                                uart_rx_tready <= 1; // Signal that we've read the byte
-                                mem_ready <= 1;
-                            end
-                        end
-                        4'h4: begin // UART STATUS
-                            mem_ready <= 1;
-                            // Bit 0: TX Ready, Bit 1: RX Data Available
-                            mem_rdata <= {30'b0, uart_rx_tvalid, uart_tx_tready};
-                        end
-                    endcase
-                end
-
-                // 4. Out of bounds catch-all
-                else begin
-                    mem_ready <= 1;
-                    mem_rdata <= 32'hFFFF_FFFF;
-                end
+            // 1. Latch Address
+            if (ram_awvalid && ram_awready) begin
+                ram_awaddr_reg <= ram_awaddr;
+                ram_aw_latched <= 1;
+            end
+            // 2. Latch Data
+            if (ram_wvalid && ram_wready) begin
+                ram_wdata_reg <= ram_wdata;
+                ram_wstrb_reg <= ram_wstrb;
+                ram_w_latched <= 1;
+            end
+            // 3. Execute Write & Send Response
+            if (ram_aw_latched && ram_w_latched && !ram_bvalid_reg) begin
+                if (ram_wstrb_reg[0]) memory[ram_awaddr_reg[12:2]][7:0]   <= ram_wdata_reg[7:0];
+                if (ram_wstrb_reg[1]) memory[ram_awaddr_reg[12:2]][15:8]  <= ram_wdata_reg[15:8];
+                if (ram_wstrb_reg[2]) memory[ram_awaddr_reg[12:2]][23:16] <= ram_wdata_reg[23:16];
+                if (ram_wstrb_reg[3]) memory[ram_awaddr_reg[12:2]][31:24] <= ram_wdata_reg[31:24];
+                ram_bvalid_reg <= 1;
+            end else if (ram_bvalid_reg && ram_bready) begin
+                // 4. Clear everything when Master accepts response
+                ram_bvalid_reg <= 0;
+                ram_aw_latched <= 0;
+                ram_w_latched  <= 0;
             end
         end
     end
 
-<<<<<<< Updated upstream
-endmodule
-=======
+    // RAM Read Channel
+    reg ram_rvalid_reg;
+    assign ram_arready = !ram_rvalid_reg || ram_rready;
+    assign ram_rvalid  = ram_rvalid_reg;
+    assign ram_rresp   = 2'b00;
+
+    always @(posedge clk) begin
+        if (!resetn) ram_rvalid_reg <= 1'b0;
+        else begin
+            if (ram_arvalid && ram_arready) begin
+                ram_rdata <= memory[ram_araddr[12:2]];
+                ram_rvalid_reg <= 1'b1;                
+            end else if (ram_rready) begin
+                ram_rvalid_reg <= 1'b0;                
+            end
+        end
+    end 
+
+    // ------------------------------------------
+    // 2. AXI-Lite LED Register
+    // ------------------------------------------
+    reg led_aw_latched, led_w_latched, led_bvalid_reg;
+    reg [31:0] led_wdata_reg;
+    reg [3:0]  led_wstrb_reg;
+
+    assign led_awready = !led_aw_latched && !led_bvalid_reg;
+    assign led_wready  = !led_w_latched  && !led_bvalid_reg;
+    assign led_bvalid  = led_bvalid_reg;
+    assign led_bresp   = 2'b00;
+
+    always @(posedge clk) begin
+        if (!resetn) begin
+            led_reg <= 8'b0; led_aw_latched <= 0; led_w_latched <= 0; led_bvalid_reg <= 0;
+        end else begin
+            // Latch Write Channels
+            if (led_awvalid && led_awready) led_aw_latched <= 1;
+            if (led_wvalid && led_wready) begin
+                led_wdata_reg <= led_wdata;
+                led_wstrb_reg <= led_wstrb;
+                led_w_latched <= 1;
+            end
+            
+            // Execute Write
+            if (led_aw_latched && led_w_latched && !led_bvalid_reg) begin
+                if (led_wstrb_reg != 0) led_reg <= led_wdata_reg[7:0];
+                led_bvalid_reg <= 1;
+            end else if (led_bvalid_reg && led_bready) begin
+                led_bvalid_reg <= 0; led_aw_latched <= 0; led_w_latched <= 0;
+            end
+        end
+    end
+
+    // LED Read Channel (Fixed Compliance)
+    reg led_rvalid_reg;
+    assign led_arready = !led_rvalid_reg || led_rready;
+    assign led_rvalid  = led_rvalid_reg;
+    assign led_rresp   = 2'b00;
+
+    always @(posedge clk) begin
+        if (!resetn) led_rvalid_reg <= 0;
+        else begin
+            if (led_arvalid && led_arready) begin
+                led_rdata <= {24'b0, led_reg};
+                led_rvalid_reg <= 1;
+            end else if (led_rready) begin
+                led_rvalid_reg <= 0;
+            end
+        end
+    end
+
+    // ------------------------------------------
+    // 3. AXI-Lite UART Wrapper
+    // ------------------------------------------
+    reg uart_aw_latched, uart_w_latched, uart_bvalid_reg;
+    reg [31:0] uart_awaddr_reg, uart_wdata_reg;
+    
+
+    assign uart_awready = !uart_aw_latched && !uart_bvalid_reg;
+    assign uart_wready  = !uart_w_latched  && !uart_bvalid_reg;
+    assign uart_bvalid  = uart_bvalid_reg;
+    assign uart_bresp   = 2'b00;
+
+    always @(posedge clk) begin
+        if (!resetn) begin
+            uart_aw_latched <= 0; uart_w_latched <= 0; uart_bvalid_reg <= 0;
+            uart_tx_tvalid <= 0;
+        end else begin
+            uart_tx_tvalid <= 0; // Default off
+            
+            // Latch Write Channels
+            if (uart_awvalid && uart_awready) begin
+                uart_awaddr_reg <= uart_awaddr;
+                uart_aw_latched <= 1;
+            end
+            if (uart_wvalid && uart_wready) begin
+                uart_wdata_reg <= uart_wdata;
+                uart_w_latched <= 1;
+            end
+            
+            // Execute Write
+            if (uart_aw_latched && uart_w_latched && !uart_bvalid_reg) begin
+                if (uart_awaddr_reg[3:0] == 4'h0) begin 
+                    // Writing to TX Data: ONLY finish if UART is ready!
+                    if (uart_tx_tready) begin
+                        tx_data_reg <= uart_wdata_reg[7:0]; 
+                        uart_tx_tvalid <= 1;                
+                        uart_bvalid_reg <= 1; // Send AXI OKAY
+                    end
+                    // If NOT ready, we do nothing! The bus stalls and waits.
+                end else begin
+                    // If writing to a read-only status register, just ACK and discard
+                    uart_bvalid_reg <= 1;
+                end
+            end else if (uart_bvalid_reg && uart_bready) begin
+                uart_bvalid_reg <= 0; uart_aw_latched <= 0; uart_w_latched <= 0;
+            end
+        end
+    end
+
     // UART Read Channel
     reg uart_rvalid_reg;
     assign uart_arready = !uart_rvalid_reg || uart_rready;
@@ -323,6 +413,150 @@ endmodule
         end
     end
 
+
+    // ------------------------------------------
+    // 4. AXI-Lite SPI Wrapper (Address 0x3000_0000)
+    // ------------------------------------------
+    axi_spi_ctrl #(
+        .C_S_AXIL_DATA_WIDTH(32),
+        .C_S_AXIL_ADDR_WIDTH(32),
+        .CLKS_PER_HALF_BIT(50) // 100MHz / (2 * 1MHz SPI Clock) = 50        
+    ) spi_subsystem (
+        .clk(clk),
+        .resetn(resetn),
+
+        // Connect to the Crossbar Wires
+        .s_axil_awaddr (spi_awaddr), 
+        .s_axil_awprot (spi_awprot), 
+        .s_axil_awvalid(spi_awvalid), 
+        .s_axil_awready(spi_awready),
+        
+        .s_axil_wdata  (spi_wdata), 
+        .s_axil_wstrb  (spi_wstrb), 
+        .s_axil_wvalid (spi_wvalid), 
+        .s_axil_wready (spi_wready),
+        
+        .s_axil_bresp  (spi_bresp), 
+        .s_axil_bvalid (spi_bvalid), 
+        .s_axil_bready (spi_bready),
+        
+        .s_axil_araddr (spi_araddr), 
+        .s_axil_arprot (spi_arprot), 
+        .s_axil_arvalid(spi_arvalid), 
+        .s_axil_arready(spi_arready),
+        
+        .s_axil_rdata  (spi_rdata), 
+        .s_axil_rresp  (spi_rresp), 
+        .s_axil_rvalid (spi_rvalid), 
+        .s_axil_rready (spi_rready),
+
+        // Physical Output Wires
+        .o_SPI_Clk  (spi_clk),
+        .i_SPI_MISO (spi_miso),
+        .o_SPI_MOSI (spi_mosi),
+        .o_SPI_CS_n (spi_cs_n)
+    );
+
+    // --- Slave 4: VRAM Wires ---
+    wire [31:0] vram_awaddr; wire [2:0] vram_awprot; wire vram_awvalid; wire vram_awready;
+    wire [31:0] vram_wdata;  wire [3:0] vram_wstrb;  wire vram_wvalid;  wire vram_wready;
+    wire [1:0]  vram_bresp;  wire vram_bvalid;       wire vram_bready;
+    wire [31:0] vram_araddr; wire [2:0] vram_arprot; wire vram_arvalid; wire vram_arready;
+    reg  [31:0] vram_rdata;  wire [1:0] vram_rresp;  wire vram_rvalid;  wire vram_rready;
+
+    // ==========================================
+    // 5. AXI-Lite VRAM (Dual Port) & VGA Driver
+    // ==========================================
+    reg [7:0] video_ram [0:511]; // 512 bytes is plenty for our 300 blocks
+    // Initialize VRAM to 0 (Black) for simulation safety
+    integer i;
+    initial begin
+        for (i = 0; i < 512; i = i + 1) begin
+            video_ram[i] = 8'h00;
+        end
+    end
+    // --- Port A: CPU Write via AXI (Simplified AXI-Lite Wrapper) ---
+    reg vram_aw_latched, vram_w_latched, vram_bvalid_reg;
+    reg [31:0] vram_awaddr_reg;
+    reg [31:0] vram_wdata_reg; 
+    reg [3:0]  vram_wstrb_reg; // <--- ADD THIS
+    
+    assign vram_awready = !vram_aw_latched && !vram_bvalid_reg;
+    assign vram_wready  = !vram_w_latched  && !vram_bvalid_reg;
+    assign vram_bvalid  = vram_bvalid_reg;
+    assign vram_bresp   = 2'b00;
+
+    always @(posedge clk) begin
+        if (!resetn) begin
+            vram_aw_latched <= 0; vram_w_latched <= 0; vram_bvalid_reg <= 0;
+        end else begin
+            if (vram_awvalid && vram_awready) begin
+                vram_awaddr_reg <= vram_awaddr;
+                vram_aw_latched <= 1;
+            end
+            if (vram_wvalid && vram_wready) begin
+                vram_wdata_reg <= vram_wdata; 
+                vram_wstrb_reg <= vram_wstrb; // <--- LATCH THE STROBE
+                vram_w_latched <= 1;
+            end
+            if (vram_aw_latched && vram_w_latched && !vram_bvalid_reg) begin
+                
+                // ✅ CORRECT: Mask off the lower 2 bits of the address and add the specific lane offset
+                if (vram_wstrb_reg[0]) video_ram[{vram_awaddr_reg[8:2], 2'b00}] <= vram_wdata_reg[7:0]; 
+                if (vram_wstrb_reg[1]) video_ram[{vram_awaddr_reg[8:2], 2'b01}] <= vram_wdata_reg[15:8]; 
+                if (vram_wstrb_reg[2]) video_ram[{vram_awaddr_reg[8:2], 2'b10}] <= vram_wdata_reg[23:16]; 
+                if (vram_wstrb_reg[3]) video_ram[{vram_awaddr_reg[8:2], 2'b11}] <= vram_wdata_reg[31:24]; 
+                
+                vram_bvalid_reg <= 1;
+            end else if (vram_bvalid_reg && vram_bready) begin
+                vram_bvalid_reg <= 0; vram_aw_latched <= 0; vram_w_latched <= 0;
+            end
+        end
+    end
+
+    // VRAM Read Channel (Dummy response, CPU shouldn't need to read screen memory)
+    reg vram_rvalid_reg;
+    assign vram_arready = !vram_rvalid_reg || vram_rready;
+
+    assign vram_rvalid  = vram_rvalid_reg;
+    assign vram_rresp   = 2'b00;
+
+    always @(posedge clk) begin
+        if (!resetn) vram_rvalid_reg <= 1'b0;
+        else begin
+            if (vram_arvalid && vram_arready) begin
+                vram_rdata <= 32'h0; // Dummy read data
+                vram_rvalid_reg <= 1'b1;
+            end else if (vram_rready) begin
+                vram_rvalid_reg <= 1'b0;
+            end
+        end
+    end
+    
+
+    // --- Port B: VGA Read & Driver ---
+    wire [8:0] vga_read_addr;
+    reg  [7:0] vga_read_data;
+
+    // UPDATED: Now runs on the main 100MHz clock!
+    always @(posedge clk) begin
+        vga_read_data <= video_ram[vga_read_addr];
+    end
+
+    // UPDATED: Port mappings match the new 100MHz CE VGA Driver
+    vga_driver vga_inst (
+        .clk_100(clk),             // Feed the 100MHz system clock
+        .resetn(resetn),           // Active-low reset
+        .vram_data(vga_read_data), // Pixel color from VRAM
+        .vram_addr(vga_read_addr), // Address request from VGA
+        .vga_r(vga_r),
+        .vga_g(vga_g),
+        .vga_b(vga_b),
+        .hsync(vga_hs),
+        .vsync(vga_vs)
+    );
+
+    
     // ------------------------------------------
     // 4. AXI-Lite I2C Wrapper
     // ------------------------------------------
@@ -448,4 +682,3 @@ endmodule
 
 endmodule
 
->>>>>>> Stashed changes
