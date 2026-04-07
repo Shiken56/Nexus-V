@@ -1,4 +1,4 @@
-PREFIX = riscv64-unknown-elf-
+PREFIX = riscv-none-elf-
 CC = $(PREFIX)gcc
 OBJCOPY = $(PREFIX)objcopy
 
