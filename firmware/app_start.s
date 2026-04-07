@@ -2,8 +2,8 @@
 .global _start
 
 _start:
-    /* Application uses upper 4KB of RAM. Stack at top of 8KB. */
-    li sp, 0x2000
+    /* Stack at the very top of the new 32KB RAM. */
+    li sp, 0x8000
     call main
 inf_loop:
     j inf_loop

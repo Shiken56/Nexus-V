@@ -1,9 +1,10 @@
 ENTRY(_start)
 
 MEMORY {
-    RAM (rwx) : ORIGIN = 0x00001000, LENGTH = 0x1000 /* Upper 4KB */
+    /* Origin stays at 0x1000 (after bootloader). 
+       Length is now Total (32KB) - Bootloader (4KB) = 28KB (0x7000) */
+    RAM (rwx) : ORIGIN = 0x00001000, LENGTH = 0x7000 
 }
-
 SECTIONS {
     .text : {
         *(.init)

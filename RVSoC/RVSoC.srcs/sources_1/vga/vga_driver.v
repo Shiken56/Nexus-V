@@ -3,7 +3,7 @@ module vga_driver (
     input wire resetn,       // Active-low reset
     input wire [7:0] vram_data, // Pixel color from VRAM
     
-    output reg [8:0] vram_addr, // Address to read from VRAM
+    output reg [16:0] vram_addr, // Address to read from VRAM
     output reg [3:0] vga_r,
     output reg [3:0] vga_g,
     output reg [3:0] vga_b,
@@ -74,13 +74,13 @@ module vga_driver (
 
     // --- Calculate VRAM Address based on Grid ---
     // (20x15 grid on a 640x480 screen = 32x32 pixel tiles)
-    wire [4:0] grid_x = h_cnt[9:5]; // Divide by 32
-    wire [4:0] grid_y = v_cnt[9:5]; // Divide by 32
+    wire [8:0] grid_x = h_cnt[9:1]; // Divide by 32
+    wire [8:0] grid_y = v_cnt[9:1]; // Divide by 32
 
     always @(posedge clk_100) begin
         if (ce_25) begin
             if (in_active_region)
-                vram_addr <= (grid_y * 20) + grid_x;
+                vram_addr <= (grid_y * 320) + grid_x;
             else
                 vram_addr <= 0; // Prevent out-of-bounds reads
         end

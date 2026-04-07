@@ -2,9 +2,7 @@ PREFIX = riscv64-unknown-elf-
 CC = $(PREFIX)gcc
 OBJCOPY = $(PREFIX)objcopy
 
-CFLAGS_BASE = -march=rv32i -mabi=ilp32 -nostartfiles -O2
-
-# --- BOOTLOADER DEFINITIONS ---
+CFLAGS_BASE = -march=rv32i -mabi=ilp32 -nostartfiles -Os# --- BOOTLOADER DEFINITIONS ---
 BOOT_SRCS = boot_start.s boot.c
 BOOT_CFLAGS = $(CFLAGS_BASE) -T boot.ld
 
@@ -23,7 +21,7 @@ bootloader.hex: bootloader.elf
 
 # Build Application (For UART upload)
 firmware.elf: $(APP_SRCS) app.ld
-	$(CC) $(APP_CFLAGS) $(APP_SRCS) -o firmware.elf
+	$(CC) $(APP_CFLAGS) $(APP_SRCS) -o firmware.elf 
 
 firmware.bin: firmware.elf
 	$(OBJCOPY) -O binary firmware.elf firmware.bin

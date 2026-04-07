@@ -14,16 +14,13 @@ def upload_firmware(com_port, bin_file):
         print(f"[*] Opening {com_port} at 115200 baud...")
         ser = serial.Serial(com_port, 115200, timeout=5)
         
-        # ==========================================
-        # NEW: Software Reset Sequence
-        # ==========================================
+        #Software Reset Sequence
         print("[*] Sending Soft-Reset command (0x7F)...")
         ser.write(b'\x7F') 
         time.sleep(0.5) # Give the FPGA 500ms to jump to 0x00000000 and initialize
         
-        # Flush the buffer just in case the app sent any garbage while dying
+        # Flush the buffer just in case the app sent any garbage while exiting
         ser.reset_input_buffer() 
-        # ==========================================
 
         print("[*] Sending Upload Command ('U')...")
         ser.write(b'U')

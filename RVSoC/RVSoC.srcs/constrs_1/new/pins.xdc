@@ -67,3 +67,9 @@ set_property IOSTANDARD LVCMOS33 [get_ports vga_hs]
 
 set_property PACKAGE_PIN B12 [get_ports vga_vs]
 set_property IOSTANDARD LVCMOS33 [get_ports vga_vs]
+
+# Temp sensor ADT7420 I2C Pins
+set_property PACKAGE_PIN C14 [get_ports scl]
+set_property PACKAGE_PIN C15 [get_ports sda]
+set_property IOSTANDARD LVCMOS33 [get_ports scl]
+set_property IOSTANDARD LVCMOS33 [get_ports sda]
