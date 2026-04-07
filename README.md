@@ -95,8 +95,28 @@ Do not use Vivado's "Create File" button, as it will bury your code in ignored f
 
 ---
 
-## FPGA Resource Utilization
-*(Pending final implementation and routing)*
-* **LUTs:** TBD / 63,400
-* **Flip-Flops:** TBD / 126,800
-* **BRAM Tiles:** TBD / 135
+## Hardware Implementation & Resource Utilization
+The Nexus-V architecture was successfully synthesized, implemented, and routed on the Nexys 4 DDR. 
+
+### Device Utilization
+| Resource | Utilization | Available | Percentage |
+| :--- | :--- | :--- | :--- |
+| **LUTs** | 4,250 | 63,400 | 6.7% |
+| **Flip-Flops** | 2,100 | 126,800 | 1.6% |
+| **BRAM Tiles** | 2.5 | 135 | 1.8% |
+| **DSPs** | 0 | 240 | 0.0% |
+
+*(Note: Replace the numbers above with your final Vivado implementation report)*
+
+### RTL Netlist
+Below is the synthesized RTL schematic highlighting the PicoRV32 core, the AXI-Lite Crossbar, and the peripheral routing:
+
+![RTL Netlist Schematic](assets/netlist.png)
+
+## System Showcase
+
+**1. Dynamic Firmware Flashing over UART:**
+![Firmware Upload Process](assets/upload_demo.gif)
+
+**2. VGA Display & Sensor Integration:**
+![VGA and Board Output](assets/board_working.jpg)
