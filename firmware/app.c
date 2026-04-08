@@ -1434,542 +1434,553 @@ int main() {
 //         for(volatile int d=0; d<100000; d++); // Smooth framerate delay
 //     }
 // }
+
+
+/*
 //Mandelbrot
-// #include <stdint.h>
+ #include <stdint.h>
 
-// #define VRAM_BASE 0x40000000
-// volatile uint8_t* const vram = (volatile uint8_t*)VRAM_BASE;
+ #define VRAM_BASE 0x40000000
+ volatile uint8_t* const vram = (volatile uint8_t*)VRAM_BASE;
 
-// // Fixed-Point Math Parameters
-// #define SHIFT 20
-// #define ONE (1 << SHIFT)
-// #define MULT(a, b) (int32_t)((((int64_t)(a)) * ((int64_t)(b))) >> SHIFT)
+// Fixed-Point Math Parameters
+#define SHIFT 20
+#define ONE (1 << SHIFT)
+#define MULT(a, b) (int32_t)((((int64_t)(a)) * ((int64_t)(b))) >> SHIFT)
 
-// #define MAX_ITER 64
+#define MAX_ITER 64
 
-// // Color Palette (RGB332 Mapping for depth)
-// uint8_t get_fractal_color(int iter) {
-//     if (iter == MAX_ITER) return 0x00; // Black inside the set
+// Color Palette (RGB332 Mapping for depth)
+uint8_t get_fractal_color(int iter) {
+    if (iter == MAX_ITER) return 0x00; // Black inside the set
     
-//     // Smooth transition from Blue -> Cyan -> Green -> Yellow -> Red
-//     int c = iter % 16;
-//     if (c < 4)  return 0x03 + (c << 2);      // Blues
-//     if (c < 8)  return 0x1F - ((c-4) << 2);  // Cyans
-//     if (c < 12) return 0x1C + ((c-8) << 5);  // Greens/Yellows
-//     return 0xFC - ((c-12) << 2);             // Reds/Oranges
-// }
+    // Smooth transition from Blue -> Cyan -> Green -> Yellow -> Red
+    int c = iter % 16;
+    if (c < 4)  return 0x03 + (c << 2);      // Blues
+    if (c < 8)  return 0x1F - ((c-4) << 2);  // Cyans
+    if (c < 12) return 0x1C + ((c-8) << 5);  // Greens/Yellows
+    return 0xFC - ((c-12) << 2);             // Reds/Oranges
+}
 
-// int main() {
-//     // Fractal bounding box coordinates in Q12.20
-//     int32_t x_min = (int32_t)(-2.0 * ONE);
-//     int32_t x_max = (int32_t)( 1.0 * ONE);
-//     int32_t y_min = (int32_t)(-1.2 * ONE);
-//     int32_t y_max = (int32_t)( 1.2 * ONE);
+int main() {
+    // Fractal bounding box coordinates in Q12.20
+    int32_t x_min = (int32_t)(-2.0 * ONE);
+    int32_t x_max = (int32_t)( 1.0 * ONE);
+    int32_t y_min = (int32_t)(-1.2 * ONE);
+    int32_t y_max = (int32_t)( 1.2 * ONE);
 
-//     int32_t dx = (x_max - x_min) / 320;
-//     int32_t dy = (y_max - y_min) / 240;
+    int32_t dx = (x_max - x_min) / 320;
+    int32_t dy = (y_max - y_min) / 240;
 
-//     int32_t c_y = y_min;
+    int32_t c_y = y_min;
 
-//     // Render loop
-//     for (int py = 0; py < 240; py++) {
-//         int32_t c_x = x_min;
-//         for (int px = 0; px < 320; px++) {
-//             int32_t z_x = 0;
-//             int32_t z_y = 0;
-//             int iter = 0;
+    // Render loop
+    for (int py = 0; py < 240; py++) {
+        int32_t c_x = x_min;
+        for (int px = 0; px < 320; px++) {
+            int32_t z_x = 0;
+            int32_t z_y = 0;
+            int iter = 0;
 
-//             // Z = Z^2 + C
-//             while (iter < MAX_ITER) {
-//                 int32_t z_x_sq = MULT(z_x, z_x);
-//                 int32_t z_y_sq = MULT(z_y, z_y);
+            // Z = Z^2 + C
+            while (iter < MAX_ITER) {
+                int32_t z_x_sq = MULT(z_x, z_x);
+                int32_t z_y_sq = MULT(z_y, z_y);
 
-//                 // Escape condition: x^2 + y^2 > 4.0
-//                 if ((z_x_sq + z_y_sq) > (4 * ONE)) break;
+                // Escape condition: x^2 + y^2 > 4.0
+                if ((z_x_sq + z_y_sq) > (4 * ONE)) break;
 
-//                 int32_t temp_z_x = z_x_sq - z_y_sq + c_x;
-//                 z_y = (MULT(z_x, z_y) << 1) + c_y; // 2*z_x*z_y + c_y
-//                 z_x = temp_z_x;
+                int32_t temp_z_x = z_x_sq - z_y_sq + c_x;
+                z_y = (MULT(z_x, z_y) << 1) + c_y; // 2*z_x*z_y + c_y
+                z_x = temp_z_x;
 
-//                 iter++;
-//             }
+                iter++;
+            }
 
-//             vram[(py * 320) + px] = get_fractal_color(iter);
-//             c_x += dx;
-//         }
-//         c_y += dy;
-//     }
+            vram[(py * 320) + px] = get_fractal_color(iter);
+            c_x += dx;
+        }
+        c_y += dy;
+    }
 
-//     // Infinite loop when done to hold the beautiful image
-//     while(1) {
-//         for(volatile int d=0; d<10000; d++); 
-//     }
-// }
-// #include <stdint.h>
+    // Infinite loop when done to hold the beautiful image
+    while(1) {
+        for(volatile int d=0; d<10000; d++); 
+    }
+}
+*/
 
-// #define VRAM_BASE 0x40000000
-// #define UART_BASE 0x20000000
-// #define SPI_BASE  0x30000000
 
-// volatile uint8_t* const vram       = (volatile uint8_t*)VRAM_BASE;
-// volatile uint32_t* const uart_data = (volatile uint32_t*)UART_BASE;
-// volatile uint32_t* const spi_data  = (volatile uint32_t*)SPI_BASE;
-// volatile uint32_t* const spi_ctrl  = (volatile uint32_t*)(SPI_BASE + 4);
 
-// // --- Colors (RGB332) ---
-// #define BG_COLOR    0x00 // Black
-// #define WALL_COLOR  0xE3 // Purple (Replaced Cyan)
-// #define HEAD_COLOR  0xFC // Yellow
-// #define BODY_COLOR  0x1C // Green
-// #define APPLE_COLOR 0xE0 // Red
+/*
+#include <stdint.h>
 
-// #define GRID_SIZE 4
-// #define MAX_SNAKE 150 
+#define VRAM_BASE 0x40000000
+#define UART_BASE 0x20000000
+#define SPI_BASE  0x30000000
 
-// int16_t snk_x[MAX_SNAKE], snk_y[MAX_SNAKE];
-// int snk_len, snk_dir_x, snk_dir_y;
-// int apple_x, apple_y, score, level;
+volatile uint8_t* const vram       = (volatile uint8_t*)VRAM_BASE;
+volatile uint32_t* const uart_data = (volatile uint32_t*)UART_BASE;
+volatile uint32_t* const spi_data  = (volatile uint32_t*)SPI_BASE;
+volatile uint32_t* const spi_ctrl  = (volatile uint32_t*)(SPI_BASE + 4);
 
-// // --- UART & SPI Helpers ---
-// void uart_print(const char* str) {
-//     while (*str) {
-//         *uart_data = *str++;
-//         for(volatile int i=0; i<5000; i++); 
-//     }
-// }
+// --- Colors (RGB332) ---
+#define BG_COLOR    0x00 // Black
+#define WALL_COLOR  0xE3 // Purple (Replaced Cyan)
+#define HEAD_COLOR  0xFC // Yellow
+#define BODY_COLOR  0x1C // Green
+#define APPLE_COLOR 0xE0 // Red
 
-// void uart_print_num(int num) {
-//     char buf[10]; int i = 0;
-//     if (num == 0) buf[i++] = '0';
-//     while (num > 0) { buf[i++] = (num % 10) + '0'; num /= 10; }
-//     while (i > 0) { *uart_data = buf[--i]; for(volatile int d=0; d<5000; d++); }
-//     uart_print("\r\n");
-// }
+#define GRID_SIZE 4
+#define MAX_SNAKE 150 
 
-// void spi_cs_low()  { while (((*spi_ctrl) & 0x01) == 0); *spi_ctrl = 0x00; }
-// void spi_cs_high() { while (((*spi_ctrl) & 0x01) == 0); *spi_ctrl = 0x02; }
-// unsigned int spi_transfer(unsigned int d) {
-//     volatile unsigned int dummy = *spi_data; (void)dummy;
-//     *spi_data = d;
-//     while (((*spi_ctrl) & 0x02) == 0);
-//     return (*spi_data) & 0xFF;
-// }
-// void read_tilt(int *x, int *y) {
-//     spi_cs_low(); spi_transfer(0x0B); spi_transfer(0x08);
-//     *x = (signed char)spi_transfer(0x00);
-//     *y = (signed char)spi_transfer(0x00);
-//     spi_transfer(0x00); 
-//     spi_cs_high();
-// }
+int16_t snk_x[MAX_SNAKE], snk_y[MAX_SNAKE];
+int snk_len, snk_dir_x, snk_dir_y;
+int apple_x, apple_y, score, level;
 
-// // --- Graphics & Logic ---
-// void draw_block(int x, int y, uint8_t color) {
-//     for (int r = 0; r < GRID_SIZE; r++)
-//         for (int c = 0; c < GRID_SIZE; c++)
-//             vram[((y + r) * 320) + (x + c)] = color;
-// }
+// --- UART & SPI Helpers ---
+void uart_print(const char* str) {
+    while (*str) {
+        *uart_data = *str++;
+        for(volatile int i=0; i<5000; i++); 
+    }
+}
 
-// // Helper to draw clean walls in the maze
-// void draw_wall_rect(int x, int y, int w, int h) {
-//     for (int r = 0; r < h; r += GRID_SIZE) {
-//         for (int c = 0; c < w; c += GRID_SIZE) {
-//             draw_block(x + c, y + r, WALL_COLOR);
-//         }
-//     }
-// }
+void uart_print_num(int num) {
+    char buf[10]; int i = 0;
+    if (num == 0) buf[i++] = '0';
+    while (num > 0) { buf[i++] = (num % 10) + '0'; num /= 10; }
+    while (i > 0) { *uart_data = buf[--i]; for(volatile int d=0; d<5000; d++); }
+    uart_print("\r\n");
+}
 
-// static uint32_t seed = 98765;
-// int rand_pos(int max) {
-//     seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF;
-//     return (seed % (max / GRID_SIZE)) * GRID_SIZE;
-// }
+void spi_cs_low()  { while (((*spi_ctrl) & 0x01) == 0); *spi_ctrl = 0x00; }
+void spi_cs_high() { while (((*spi_ctrl) & 0x01) == 0); *spi_ctrl = 0x02; }
+unsigned int spi_transfer(unsigned int d) {
+    volatile unsigned int dummy = *spi_data; (void)dummy;
+    *spi_data = d;
+    while (((*spi_ctrl) & 0x02) == 0);
+    return (*spi_data) & 0xFF;
+}
+void read_tilt(int *x, int *y) {
+    spi_cs_low(); spi_transfer(0x0B); spi_transfer(0x08);
+    *x = (signed char)spi_transfer(0x00);
+    *y = (signed char)spi_transfer(0x00);
+    spi_transfer(0x00); 
+    spi_cs_high();
+}
 
-// void spawn_apple() {
-//     while(1) {
-//         apple_x = rand_pos(300);
-//         apple_y = rand_pos(220);
+// --- Graphics & Logic ---
+void draw_block(int x, int y, uint8_t color) {
+    for (int r = 0; r < GRID_SIZE; r++)
+        for (int c = 0; c < GRID_SIZE; c++)
+            vram[((y + r) * 320) + (x + c)] = color;
+}
+
+// Helper to draw clean walls in the maze
+void draw_wall_rect(int x, int y, int w, int h) {
+    for (int r = 0; r < h; r += GRID_SIZE) {
+        for (int c = 0; c < w; c += GRID_SIZE) {
+            draw_block(x + c, y + r, WALL_COLOR);
+        }
+    }
+}
+
+static uint32_t seed = 98765;
+int rand_pos(int max) {
+    seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF;
+    return (seed % (max / GRID_SIZE)) * GRID_SIZE;
+}
+
+void spawn_apple() {
+    while(1) {
+        apple_x = rand_pos(300);
+        apple_y = rand_pos(220);
         
-//         // Keep it safely away from the absolute borders
-//         if (apple_x < GRID_SIZE * 2) apple_x = GRID_SIZE * 2;
-//         if (apple_y < GRID_SIZE * 2) apple_y = GRID_SIZE * 2;
+        // Keep it safely away from the absolute borders
+        if (apple_x < GRID_SIZE * 2) apple_x = GRID_SIZE * 2;
+        if (apple_y < GRID_SIZE * 2) apple_y = GRID_SIZE * 2;
         
-//         // Only spawn if the spot is pure background black
-//         if (vram[(apple_y * 320) + apple_x] == BG_COLOR) break; 
-//     }
-//     draw_block(apple_x, apple_y, APPLE_COLOR);
-// }
+        // Only spawn if the spot is pure background black
+        if (vram[(apple_y * 320) + apple_x] == BG_COLOR) break; 
+    }
+    draw_block(apple_x, apple_y, APPLE_COLOR);
+}
 
-// void build_maze(int lvl) {
-//     for(int i = 0; i < 76800; i++) vram[i] = BG_COLOR;
+void build_maze(int lvl) {
+    for(int i = 0; i < 76800; i++) vram[i] = BG_COLOR;
     
-//     // Outer Borders (Solid Walls)
-//     draw_wall_rect(0, 0, 320, GRID_SIZE);             // Top
-//     draw_wall_rect(0, 240-GRID_SIZE, 320, GRID_SIZE); // Bottom
-//     draw_wall_rect(0, 0, GRID_SIZE, 240);             // Left
-//     draw_wall_rect(320-GRID_SIZE, 0, GRID_SIZE, 240); // Right
+    // Outer Borders (Solid Walls)
+    draw_wall_rect(0, 0, 320, GRID_SIZE);             // Top
+    draw_wall_rect(0, 240-GRID_SIZE, 320, GRID_SIZE); // Bottom
+    draw_wall_rect(0, 0, GRID_SIZE, 240);             // Left
+    draw_wall_rect(320-GRID_SIZE, 0, GRID_SIZE, 240); // Right
 
-//     // Actual Maze Generation
-//     if (lvl == 1) {
-//         // Level 1: A classic "Pac-Man" style structured maze
-//         draw_wall_rect(40, 40, 240, GRID_SIZE);   // Top inner bound
-//         draw_wall_rect(40, 40, GRID_SIZE, 160);   // Left inner bound
-//         draw_wall_rect(40, 200, 240, GRID_SIZE);  // Bottom inner bound
+    // Actual Maze Generation
+    if (lvl == 1) {
+        // Level 1: A classic "Pac-Man" style structured maze
+        draw_wall_rect(40, 40, 240, GRID_SIZE);   // Top inner bound
+        draw_wall_rect(40, 40, GRID_SIZE, 160);   // Left inner bound
+        draw_wall_rect(40, 200, 240, GRID_SIZE);  // Bottom inner bound
         
-//         // Middle blockers
-//         draw_wall_rect(120, 80, GRID_SIZE, 80);   // Vertical divider
-//         draw_wall_rect(120, 120, 80, GRID_SIZE);  // Horizontal branch
+        // Middle blockers
+        draw_wall_rect(120, 80, GRID_SIZE, 80);   // Vertical divider
+        draw_wall_rect(120, 120, 80, GRID_SIZE);  // Horizontal branch
         
-//         // Small corner rooms
-//         draw_wall_rect(200, 40, GRID_SIZE, 40);
-//         draw_wall_rect(240, 120, 40, GRID_SIZE);
+        // Small corner rooms
+        draw_wall_rect(200, 40, GRID_SIZE, 40);
+        draw_wall_rect(240, 120, 40, GRID_SIZE);
         
-//     } else {
-//         // Level 2: Harder, tighter labyrinth
-//         draw_wall_rect(40, 40, 240, GRID_SIZE);
-//         draw_wall_rect(160, 40, GRID_SIZE, 100);
+    } else {
+        // Level 2: Harder, tighter labyrinth
+        draw_wall_rect(40, 40, 240, GRID_SIZE);
+        draw_wall_rect(160, 40, GRID_SIZE, 100);
         
-//         draw_wall_rect(40, 80, 80, GRID_SIZE);
-//         draw_wall_rect(80, 120, GRID_SIZE, 80);
+        draw_wall_rect(40, 80, 80, GRID_SIZE);
+        draw_wall_rect(80, 120, GRID_SIZE, 80);
         
-//         draw_wall_rect(120, 160, 120, GRID_SIZE);
-//         draw_wall_rect(240, 80, GRID_SIZE, 120);
-//         draw_wall_rect(200, 80, 40, GRID_SIZE);
-//     }
+        draw_wall_rect(120, 160, 120, GRID_SIZE);
+        draw_wall_rect(240, 80, GRID_SIZE, 120);
+        draw_wall_rect(200, 80, 40, GRID_SIZE);
+    }
     
-//     spawn_apple();
-// }
+    spawn_apple();
+}
 
-// void reset_game() {
-//     uart_print("--- NEW GAME (Level "); uart_print_num(level); uart_print(") ---\r\n");
-//     snk_len = 5; 
-//     score = 0; 
-//     snk_dir_x = 1; 
-//     snk_dir_y = 0;
+void reset_game() {
+    uart_print("--- NEW GAME (Level "); uart_print_num(level); uart_print(") ---\r\n");
+    snk_len = 5; 
+    score = 0; 
+    snk_dir_x = 1; 
+    snk_dir_y = 0;
     
-//     // Spawn snake safely inside the maze
-//     for(int i = 0; i < snk_len; i++) { 
-//         snk_x[i] = 40 - (i*GRID_SIZE); 
-//         snk_y[i] = 20; 
-//     }
-//     build_maze(level);
-// }
+    // Spawn snake safely inside the maze
+    for(int i = 0; i < snk_len; i++) { 
+        snk_x[i] = 40 - (i*GRID_SIZE); 
+        snk_y[i] = 20; 
+    }
+    build_maze(level);
+}
 
-// int main() {
-//     spi_cs_high(); for(volatile int i=0; i<100000; i++);
-//     spi_cs_low(); spi_transfer(0x0A); spi_transfer(0x2D); spi_transfer(0x02); spi_cs_high();
+int main() {
+    spi_cs_high(); for(volatile int i=0; i<100000; i++);
+    spi_cs_low(); spi_transfer(0x0A); spi_transfer(0x2D); spi_transfer(0x02); spi_cs_high();
 
-//     level = 1; 
-//     reset_game();
+    level = 1; 
+    reset_game();
 
-//     while(1) {
-//         int ax, ay; read_tilt(&ax, &ay);
+    while(1) {
+        int ax, ay; read_tilt(&ax, &ay);
         
-//         // Change direction based on tilt
-//         if (ax > 15 && snk_dir_x == 0)       { snk_dir_x = 1; snk_dir_y = 0; }
-//         else if (ax < -15 && snk_dir_x == 0) { snk_dir_x = -1; snk_dir_y = 0; }
-//         else if (ay > 15 && snk_dir_y == 0)  { snk_dir_x = 0; snk_dir_y = -1; }
-//         else if (ay < -15 && snk_dir_y == 0) { snk_dir_x = 0; snk_dir_y = 1; }
+        // Change direction based on tilt
+        if (ax > 15 && snk_dir_x == 0)       { snk_dir_x = 1; snk_dir_y = 0; }
+        else if (ax < -15 && snk_dir_x == 0) { snk_dir_x = -1; snk_dir_y = 0; }
+        else if (ay > 15 && snk_dir_y == 0)  { snk_dir_x = 0; snk_dir_y = -1; }
+        else if (ay < -15 && snk_dir_y == 0) { snk_dir_x = 0; snk_dir_y = 1; }
 
-//         int next_x = snk_x[0] + (snk_dir_x * GRID_SIZE);
-//         int next_y = snk_y[0] + (snk_dir_y * GRID_SIZE);
+        int next_x = snk_x[0] + (snk_dir_x * GRID_SIZE);
+        int next_y = snk_y[0] + (snk_dir_y * GRID_SIZE);
         
-//         // 1. Boundary Crash Protection
-//         if (next_x < 0 || next_x > (320 - GRID_SIZE) || next_y < 0 || next_y > (240 - GRID_SIZE)) {
-//             // Hit absolute outer boundary. Treat it like a solid wall (stop).
-//             next_x = snk_x[0];
-//             next_y = snk_y[0];
-//         } else {
-//             // Safe to check VRAM
-//             uint8_t target = vram[(next_y * 320) + next_x];
+        // 1. Boundary Crash Protection
+        if (next_x < 0 || next_x > (320 - GRID_SIZE) || next_y < 0 || next_y > (240 - GRID_SIZE)) {
+            // Hit absolute outer boundary. Treat it like a solid wall (stop).
+            next_x = snk_x[0];
+            next_y = snk_y[0];
+        } else {
+            // Safe to check VRAM
+            uint8_t target = vram[(next_y * 320) + next_x];
 
-//             // 2. Solid Wall Logic
-//             if (target == WALL_COLOR) {
-//                 // Do not advance the snake's position
-//                 next_x = snk_x[0];
-//                 next_y = snk_y[0];
-//             } 
-//             // 3. Death Logic (Biting Self)
-//             else if (target == BODY_COLOR) {
-//                 level = 1; 
-//                 reset_game(); 
-//                 continue; 
-//             } 
-//             // 4. Food & Level Logic
-//             else if (target == APPLE_COLOR) {
-//                 if (snk_len < MAX_SNAKE) snk_len += 3; // Grow
-//                 score++;
+            // 2. Solid Wall Logic
+            if (target == WALL_COLOR) {
+                // Do not advance the snake's position
+                next_x = snk_x[0];
+                next_y = snk_y[0];
+            } 
+            // 3. Death Logic (Biting Self)
+            else if (target == BODY_COLOR) {
+                level = 1; 
+                reset_game(); 
+                continue; 
+            } 
+            // 4. Food & Level Logic
+            else if (target == APPLE_COLOR) {
+                if (snk_len < MAX_SNAKE) snk_len += 3; // Grow
+                score++;
                 
-//                 uart_print("Apples eaten: "); uart_print_num(score);
+                uart_print("Apples eaten: "); uart_print_num(score);
                 
-//                 // Advance to Level 2 after 3 apples
-//                 if (score >= 3 && level == 1) { 
-//                     level = 2; 
-//                     reset_game(); 
-//                     continue; 
-//                 }
-//                 spawn_apple();
-//             }
-//         }
+                // Advance to Level 2 after 3 apples
+                if (score >= 3 && level == 1) { 
+                    level = 2; 
+                    reset_game(); 
+                    continue; 
+                }
+                spawn_apple();
+            }
+        }
 
-//         // Only update the body arrays and draw if the snake actually moved.
-//         // If it is stuck on a wall, it will wait here until you tilt away.
-//         if (next_x != snk_x[0] || next_y != snk_y[0]) {
-//             draw_block(snk_x[snk_len-1], snk_y[snk_len-1], BG_COLOR); // Erase tail
+        // Only update the body arrays and draw if the snake actually moved.
+        // If it is stuck on a wall, it will wait here until you tilt away.
+        if (next_x != snk_x[0] || next_y != snk_y[0]) {
+            draw_block(snk_x[snk_len-1], snk_y[snk_len-1], BG_COLOR); // Erase tail
             
-//             // Shift body forward
-//             for(int i = snk_len - 1; i > 0; i--) { 
-//                 snk_x[i] = snk_x[i-1]; 
-//                 snk_y[i] = snk_y[i-1]; 
-//                 draw_block(snk_x[i], snk_y[i], BODY_COLOR); 
-//             }
+            // Shift body forward
+            for(int i = snk_len - 1; i > 0; i--) { 
+                snk_x[i] = snk_x[i-1]; 
+                snk_y[i] = snk_y[i-1]; 
+                draw_block(snk_x[i], snk_y[i], BODY_COLOR); 
+            }
             
-//             // Move Head
-//             snk_x[0] = next_x; 
-//             snk_y[0] = next_y;
-//             draw_block(snk_x[0], snk_y[0], HEAD_COLOR);
-//         }
+            // Move Head
+            snk_x[0] = next_x; 
+            snk_y[0] = next_y;
+            draw_block(snk_x[0], snk_y[0], HEAD_COLOR);
+        }
 
-//         // Delay to control game speed
-//         for(volatile int i=0; i<150000; i++); 
-//     }
-// }
-// #include <stdint.h>
+        // Delay to control game speed
+        for(volatile int i=0; i<150000; i++); 
+    }
+}
+*/
 
-// #define VRAM_BASE 0x40000000
-// #define UART_BASE 0x20000000
-// #define SPI_BASE  0x30000000
+/*
+#include <stdint.h>
 
-// volatile uint8_t* const vram       = (volatile uint8_t*)VRAM_BASE;
-// volatile uint32_t* const uart_data = (volatile uint32_t*)UART_BASE;
-// volatile uint32_t* const spi_data  = (volatile uint32_t*)SPI_BASE;
-// volatile uint32_t* const spi_ctrl  = (volatile uint32_t*)(SPI_BASE + 4);
+#define VRAM_BASE 0x40000000
+#define UART_BASE 0x20000000
+#define SPI_BASE  0x30000000
 
-// // --- Colors (RGB332) ---
-// #define BG_COLOR    0x00 // Black
-// #define WALL_COLOR  0xE3 // Purple
-// #define HEAD_COLOR  0xFC // Yellow
-// #define BODY_COLOR  0x1C // Green
-// #define APPLE_COLOR 0xE0 // Red
+volatile uint8_t* const vram       = (volatile uint8_t*)VRAM_BASE;
+volatile uint32_t* const uart_data = (volatile uint32_t*)UART_BASE;
+volatile uint32_t* const spi_data  = (volatile uint32_t*)SPI_BASE;
+volatile uint32_t* const spi_ctrl  = (volatile uint32_t*)(SPI_BASE + 4);
 
-// #define GRID_SIZE 4
-// #define MAX_SNAKE 150 
+// --- Colors (RGB332) ---
+#define BG_COLOR    0x00 // Black
+#define WALL_COLOR  0xE3 // Purple
+#define HEAD_COLOR  0xFC // Yellow
+#define BODY_COLOR  0x1C // Green
+#define APPLE_COLOR 0xE0 // Red
 
-// int16_t snk_x[MAX_SNAKE], snk_y[MAX_SNAKE];
-// int snk_len, snk_dir_x, snk_dir_y;
-// int apple_x, apple_y;
+#define GRID_SIZE 4
+#define MAX_SNAKE 150 
 
-// // Game stats
-// int level = 1;
-// int total_apples = 0;
-// int apples_this_level = 0;
+int16_t snk_x[MAX_SNAKE], snk_y[MAX_SNAKE];
+int snk_len, snk_dir_x, snk_dir_y;
+int apple_x, apple_y;
 
-// // --- UART & SPI Helpers ---
-// void uart_print(const char* str) {
-//     while (*str) {
-//         *uart_data = *str++;
-//         for(volatile int i=0; i<5000; i++); 
-//     }
-// }
+// Game stats
+int level = 1;
+int total_apples = 0;
+int apples_this_level = 0;
 
-// void uart_print_num(int num) {
-//     char buf[10]; int i = 0;
-//     if (num == 0) buf[i++] = '0';
-//     while (num > 0) { buf[i++] = (num % 10) + '0'; num /= 10; }
-//     while (i > 0) { *uart_data = buf[--i]; for(volatile int d=0; d<5000; d++); }
-//     // Note: Removed the automatic \r\n here so we can print on one line
-// }
+// --- UART & SPI Helpers ---
+void uart_print(const char* str) {
+    while (*str) {
+        *uart_data = *str++;
+        for(volatile int i=0; i<5000; i++); 
+    }
+}
 
-// void spi_cs_low()  { while (((*spi_ctrl) & 0x01) == 0); *spi_ctrl = 0x00; }
-// void spi_cs_high() { while (((*spi_ctrl) & 0x01) == 0); *spi_ctrl = 0x02; }
-// unsigned int spi_transfer(unsigned int d) {
-//     volatile unsigned int dummy = *spi_data; (void)dummy;
-//     *spi_data = d;
-//     while (((*spi_ctrl) & 0x02) == 0);
-//     return (*spi_data) & 0xFF;
-// }
-// void read_tilt(int *x, int *y) {
-//     spi_cs_low(); spi_transfer(0x0B); spi_transfer(0x08);
-//     *x = (signed char)spi_transfer(0x00);
-//     *y = (signed char)spi_transfer(0x00);
-//     spi_transfer(0x00); 
-//     spi_cs_high();
-// }
+void uart_print_num(int num) {
+    char buf[10]; int i = 0;
+    if (num == 0) buf[i++] = '0';
+    while (num > 0) { buf[i++] = (num % 10) + '0'; num /= 10; }
+    while (i > 0) { *uart_data = buf[--i]; for(volatile int d=0; d<5000; d++); }
+    // Note: Removed the automatic \r\n here so we can print on one line
+}
 
-// // --- Graphics & Logic ---
-// void draw_block(int x, int y, uint8_t color) {
-//     for (int r = 0; r < GRID_SIZE; r++)
-//         for (int c = 0; c < GRID_SIZE; c++)
-//             vram[((y + r) * 320) + (x + c)] = color;
-// }
+void spi_cs_low()  { while (((*spi_ctrl) & 0x01) == 0); *spi_ctrl = 0x00; }
+void spi_cs_high() { while (((*spi_ctrl) & 0x01) == 0); *spi_ctrl = 0x02; }
+unsigned int spi_transfer(unsigned int d) {
+    volatile unsigned int dummy = *spi_data; (void)dummy;
+    *spi_data = d;
+    while (((*spi_ctrl) & 0x02) == 0);
+    return (*spi_data) & 0xFF;
+}
+void read_tilt(int *x, int *y) {
+    spi_cs_low(); spi_transfer(0x0B); spi_transfer(0x08);
+    *x = (signed char)spi_transfer(0x00);
+    *y = (signed char)spi_transfer(0x00);
+    spi_transfer(0x00); 
+    spi_cs_high();
+}
 
-// void draw_wall_rect(int x, int y, int w, int h) {
-//     for (int r = 0; r < h; r += GRID_SIZE) {
-//         for (int c = 0; c < w; c += GRID_SIZE) {
-//             draw_block(x + c, y + r, WALL_COLOR);
-//         }
-//     }
-// }
+// --- Graphics & Logic ---
+void draw_block(int x, int y, uint8_t color) {
+    for (int r = 0; r < GRID_SIZE; r++)
+        for (int c = 0; c < GRID_SIZE; c++)
+            vram[((y + r) * 320) + (x + c)] = color;
+}
 
-// static uint32_t seed = 98765;
-// int rand_pos(int max) {
-//     seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF;
-//     return (seed % (max / GRID_SIZE)) * GRID_SIZE;
-// }
+void draw_wall_rect(int x, int y, int w, int h) {
+    for (int r = 0; r < h; r += GRID_SIZE) {
+        for (int c = 0; c < w; c += GRID_SIZE) {
+            draw_block(x + c, y + r, WALL_COLOR);
+        }
+    }
+}
 
-// void spawn_apple() {
-//     while(1) {
-//         apple_x = rand_pos(300);
-//         apple_y = rand_pos(220);
+static uint32_t seed = 98765;
+int rand_pos(int max) {
+    seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF;
+    return (seed % (max / GRID_SIZE)) * GRID_SIZE;
+}
+
+void spawn_apple() {
+    while(1) {
+        apple_x = rand_pos(300);
+        apple_y = rand_pos(220);
         
-//         if (apple_x < GRID_SIZE * 2) apple_x = GRID_SIZE * 2;
-//         if (apple_y < GRID_SIZE * 2) apple_y = GRID_SIZE * 2;
+        if (apple_x < GRID_SIZE * 2) apple_x = GRID_SIZE * 2;
+        if (apple_y < GRID_SIZE * 2) apple_y = GRID_SIZE * 2;
         
-//         if (vram[(apple_y * 320) + apple_x] == BG_COLOR) break; 
-//     }
-//     draw_block(apple_x, apple_y, APPLE_COLOR);
-// }
+        if (vram[(apple_y * 320) + apple_x] == BG_COLOR) break; 
+    }
+    draw_block(apple_x, apple_y, APPLE_COLOR);
+}
 
-// void build_maze(int lvl) {
-//     for(int i = 0; i < 76800; i++) vram[i] = BG_COLOR;
+void build_maze(int lvl) {
+    for(int i = 0; i < 76800; i++) vram[i] = BG_COLOR;
     
-//     // Outer Borders
-//     draw_wall_rect(0, 0, 320, GRID_SIZE);             
-//     draw_wall_rect(0, 240-GRID_SIZE, 320, GRID_SIZE); 
-//     draw_wall_rect(0, 0, GRID_SIZE, 240);             
-//     draw_wall_rect(320-GRID_SIZE, 0, GRID_SIZE, 240); 
+    // Outer Borders
+    draw_wall_rect(0, 0, 320, GRID_SIZE);             
+    draw_wall_rect(0, 240-GRID_SIZE, 320, GRID_SIZE); 
+    draw_wall_rect(0, 0, GRID_SIZE, 240);             
+    draw_wall_rect(320-GRID_SIZE, 0, GRID_SIZE, 240); 
 
-//     int maze_type = (lvl - 1) % 3; // Cycles through 3 layouts endlessly
+    int maze_type = (lvl - 1) % 3; // Cycles through 3 layouts endlessly
 
-//     if (maze_type == 0) {
-//         // Layout 1: Classic
-//         draw_wall_rect(40, 40, 240, GRID_SIZE);   
-//         draw_wall_rect(40, 40, GRID_SIZE, 160);   
-//         draw_wall_rect(40, 200, 240, GRID_SIZE);  
-//         draw_wall_rect(120, 80, GRID_SIZE, 80);   
-//         draw_wall_rect(120, 120, 80, GRID_SIZE);  
-//         draw_wall_rect(200, 40, GRID_SIZE, 40);
-//         draw_wall_rect(240, 120, 40, GRID_SIZE);
-//     } 
-//     else if (maze_type == 1) {
-//         // Layout 2: Tight Corridors
-//         draw_wall_rect(40, 40, 240, GRID_SIZE);
-//         draw_wall_rect(160, 40, GRID_SIZE, 100);
-//         draw_wall_rect(40, 80, 80, GRID_SIZE);
-//         draw_wall_rect(80, 120, GRID_SIZE, 80);
-//         draw_wall_rect(120, 160, 120, GRID_SIZE);
-//         draw_wall_rect(240, 80, GRID_SIZE, 120);
-//         draw_wall_rect(200, 80, 40, GRID_SIZE);
-//     }
-//     else {
-//         // Layout 3: Pillars / Checkered
-//         for(int x = 60; x < 280; x += 60) {
-//             for(int y = 60; y < 200; y += 60) {
-//                 draw_wall_rect(x, y, 20, 20);
-//             }
-//         }
-//     }
+    if (maze_type == 0) {
+        // Layout 1: Classic
+        draw_wall_rect(40, 40, 240, GRID_SIZE);   
+        draw_wall_rect(40, 40, GRID_SIZE, 160);   
+        draw_wall_rect(40, 200, 240, GRID_SIZE);  
+        draw_wall_rect(120, 80, GRID_SIZE, 80);   
+        draw_wall_rect(120, 120, 80, GRID_SIZE);  
+        draw_wall_rect(200, 40, GRID_SIZE, 40);
+        draw_wall_rect(240, 120, 40, GRID_SIZE);
+    } 
+    else if (maze_type == 1) {
+        // Layout 2: Tight Corridors
+        draw_wall_rect(40, 40, 240, GRID_SIZE);
+        draw_wall_rect(160, 40, GRID_SIZE, 100);
+        draw_wall_rect(40, 80, 80, GRID_SIZE);
+        draw_wall_rect(80, 120, GRID_SIZE, 80);
+        draw_wall_rect(120, 160, 120, GRID_SIZE);
+        draw_wall_rect(240, 80, GRID_SIZE, 120);
+        draw_wall_rect(200, 80, 40, GRID_SIZE);
+    }
+    else {
+        // Layout 3: Pillars / Checkered
+        for(int x = 60; x < 280; x += 60) {
+            for(int y = 60; y < 200; y += 60) {
+                draw_wall_rect(x, y, 20, 20);
+            }
+        }
+    }
     
-//     spawn_apple();
-// }
+    spawn_apple();
+}
 
-// void load_level() {
-//     uart_print("\r\n--- STARTING LEVEL "); uart_print_num(level); uart_print(" ---\r\n");
-//     snk_len = 5; 
-//     apples_this_level = 0;
-//     snk_dir_x = 1; 
-//     snk_dir_y = 0;
+void load_level() {
+    uart_print("\r\n--- STARTING LEVEL "); uart_print_num(level); uart_print(" ---\r\n");
+    snk_len = 5; 
+    apples_this_level = 0;
+    snk_dir_x = 1; 
+    snk_dir_y = 0;
     
-//     for(int i = 0; i < snk_len; i++) { 
-//         snk_x[i] = 40 - (i*GRID_SIZE); 
-//         snk_y[i] = 20; 
-//     }
-//     build_maze(level);
-// }
+    for(int i = 0; i < snk_len; i++) { 
+        snk_x[i] = 40 - (i*GRID_SIZE); 
+        snk_y[i] = 20; 
+    }
+    build_maze(level);
+}
 
-// void game_over() {
-//     uart_print("\r\n!!! GAME OVER !!!\r\n");
-//     uart_print("You made it to Level: "); uart_print_num(level);
-//     uart_print(" with "); uart_print_num(total_apples); uart_print(" total apples.\r\n");
+void game_over() {
+    uart_print("\r\n!!! GAME OVER !!!\r\n");
+    uart_print("You made it to Level: "); uart_print_num(level);
+    uart_print(" with "); uart_print_num(total_apples); uart_print(" total apples.\r\n");
     
-//     // Reset global stats
-//     level = 1;
-//     total_apples = 0;
-//     load_level();
-// }
+    // Reset global stats
+    level = 1;
+    total_apples = 0;
+    load_level();
+}
 
-// int main() {
-//     spi_cs_high(); for(volatile int i=0; i<100000; i++);
-//     spi_cs_low(); spi_transfer(0x0A); spi_transfer(0x2D); spi_transfer(0x02); spi_cs_high();
+int main() {
+    spi_cs_high(); for(volatile int i=0; i<100000; i++);
+    spi_cs_low(); spi_transfer(0x0A); spi_transfer(0x2D); spi_transfer(0x02); spi_cs_high();
 
-//     // Start first game
-//     level = 1;
-//     total_apples = 0;
-//     load_level();
+    // Start first game
+    level = 1;
+    total_apples = 0;
+    load_level();
 
-//     while(1) {
-//         int ax, ay; read_tilt(&ax, &ay);
+    while(1) {
+        int ax, ay; read_tilt(&ax, &ay);
         
-//         if (ax > 15 && snk_dir_x == 0)       { snk_dir_x = 1; snk_dir_y = 0; }
-//         else if (ax < -15 && snk_dir_x == 0) { snk_dir_x = -1; snk_dir_y = 0; }
-//         else if (ay > 15 && snk_dir_y == 0)  { snk_dir_x = 0; snk_dir_y = -1; }
-//         else if (ay < -15 && snk_dir_y == 0) { snk_dir_x = 0; snk_dir_y = 1; }
+        if (ax > 15 && snk_dir_x == 0)       { snk_dir_x = 1; snk_dir_y = 0; }
+        else if (ax < -15 && snk_dir_x == 0) { snk_dir_x = -1; snk_dir_y = 0; }
+        else if (ay > 15 && snk_dir_y == 0)  { snk_dir_x = 0; snk_dir_y = -1; }
+        else if (ay < -15 && snk_dir_y == 0) { snk_dir_x = 0; snk_dir_y = 1; }
 
-//         int next_x = snk_x[0] + (snk_dir_x * GRID_SIZE);
-//         int next_y = snk_y[0] + (snk_dir_y * GRID_SIZE);
+        int next_x = snk_x[0] + (snk_dir_x * GRID_SIZE);
+        int next_y = snk_y[0] + (snk_dir_y * GRID_SIZE);
         
-//         if (next_x < 0 || next_x > (320 - GRID_SIZE) || next_y < 0 || next_y > (240 - GRID_SIZE)) {
-//             next_x = snk_x[0];
-//             next_y = snk_y[0];
-//         } else {
-//             uint8_t target = vram[(next_y * 320) + next_x];
+        if (next_x < 0 || next_x > (320 - GRID_SIZE) || next_y < 0 || next_y > (240 - GRID_SIZE)) {
+            next_x = snk_x[0];
+            next_y = snk_y[0];
+        } else {
+            uint8_t target = vram[(next_y * 320) + next_x];
 
-//             if (target == WALL_COLOR) {
-//                 next_x = snk_x[0];
-//                 next_y = snk_y[0];
-//             } 
-//             else if (target == BODY_COLOR) {
-//                 game_over(); 
-//                 continue; 
-//             } 
-//             else if (target == APPLE_COLOR) {
-//                 if (snk_len < MAX_SNAKE) snk_len += 3;
+            if (target == WALL_COLOR) {
+                next_x = snk_x[0];
+                next_y = snk_y[0];
+            } 
+            else if (target == BODY_COLOR) {
+                game_over(); 
+                continue; 
+            } 
+            else if (target == APPLE_COLOR) {
+                if (snk_len < MAX_SNAKE) snk_len += 3;
                 
-//                 total_apples++;
-//                 apples_this_level++;
+                total_apples++;
+                apples_this_level++;
                 
-//                 // UART Format: "Level: X | Total Apples: Y"
-//                 uart_print("Level: "); uart_print_num(level);
-//                 uart_print(" | Total Apples: "); uart_print_num(total_apples);
-//                 uart_print("\r\n");
+                // UART Format: "Level: X | Total Apples: Y"
+                uart_print("Level: "); uart_print_num(level);
+                uart_print(" | Total Apples: "); uart_print_num(total_apples);
+                uart_print("\r\n");
                 
-//                 // Level up after every 3 apples
-//                 if (apples_this_level >= 3) { 
-//                     level++; 
-//                     load_level(); 
-//                     continue; 
-//                 } else {
-//                     spawn_apple();
-//                 }
-//             }
-//         }
+                // Level up after every 3 apples
+                if (apples_this_level >= 3) { 
+                    level++; 
+                    load_level(); 
+                    continue; 
+                } else {
+                    spawn_apple();
+                }
+            }
+        }
 
-//         if (next_x != snk_x[0] || next_y != snk_y[0]) {
-//             draw_block(snk_x[snk_len-1], snk_y[snk_len-1], BG_COLOR); 
+        if (next_x != snk_x[0] || next_y != snk_y[0]) {
+            draw_block(snk_x[snk_len-1], snk_y[snk_len-1], BG_COLOR); 
             
-//             for(int i = snk_len - 1; i > 0; i--) { 
-//                 snk_x[i] = snk_x[i-1]; 
-//                 snk_y[i] = snk_y[i-1]; 
-//                 draw_block(snk_x[i], snk_y[i], BODY_COLOR); 
-//             }
+            for(int i = snk_len - 1; i > 0; i--) { 
+                snk_x[i] = snk_x[i-1]; 
+                snk_y[i] = snk_y[i-1]; 
+                draw_block(snk_x[i], snk_y[i], BODY_COLOR); 
+            }
             
-//             snk_x[0] = next_x; 
-//             snk_y[0] = next_y;
-//             draw_block(snk_x[0], snk_y[0], HEAD_COLOR);
-//         }
+            snk_x[0] = next_x; 
+            snk_y[0] = next_y;
+            draw_block(snk_x[0], snk_y[0], HEAD_COLOR);
+        }
 
-//         for(volatile int i=0; i<150000; i++); 
-//     }
-// }
+        for(volatile int i=0; i<150000; i++); 
+    }
+}
 // #include <stdint.h>
 
 // ==========================================
@@ -2234,216 +2245,217 @@ int main() {
 //     }
 // }
 
-// //New snake
-// #include <stdint.h>
+/*
+//New snake
+#include <stdint.h>
 
-// #define VRAM_BASE 0x40000000
-// #define UART_BASE 0x20000000
-// #define SPI_BASE  0x30000000
+#define VRAM_BASE 0x40000000
+#define UART_BASE 0x20000000
+#define SPI_BASE  0x30000000
 
-// volatile uint8_t* const vram       = (volatile uint8_t*)VRAM_BASE;
-// volatile uint32_t* const uart_data   = (volatile uint32_t*)UART_BASE;
-// volatile uint32_t* const uart_status = (volatile uint32_t*)(UART_BASE + 4);
-// volatile uint32_t* const spi_data  = (volatile uint32_t*)SPI_BASE;
-// volatile uint32_t* const spi_ctrl  = (volatile uint32_t*)(SPI_BASE + 4);
+volatile uint8_t* const vram       = (volatile uint8_t*)VRAM_BASE;
+volatile uint32_t* const uart_data   = (volatile uint32_t*)UART_BASE;
+volatile uint32_t* const uart_status = (volatile uint32_t*)(UART_BASE + 4);
+volatile uint32_t* const spi_data  = (volatile uint32_t*)SPI_BASE;
+volatile uint32_t* const spi_ctrl  = (volatile uint32_t*)(SPI_BASE + 4);
 
-// #define BG_COLOR    0x00 // Black
-// #define WALL_COLOR  0xE3 // Purple
-// #define HEAD_COLOR  0xFC // Yellow
-// #define BODY_COLOR  0x1C // Green
-// #define APPLE_COLOR 0xE0 // Red
+#define BG_COLOR    0x00 // Black
+#define WALL_COLOR  0xE3 // Purple
+#define HEAD_COLOR  0xFC // Yellow
+#define BODY_COLOR  0x1C // Green
+#define APPLE_COLOR 0xE0 // Red
 
-// #define GRID_SIZE 4
-// #define MAX_SNAKE 150 
+#define GRID_SIZE 4
+#define MAX_SNAKE 150 
 
-// int16_t snk_x[MAX_SNAKE], snk_y[MAX_SNAKE];
-// int snk_len, snk_dir_x, snk_dir_y;
-// int apple_x, apple_y;
-// int level = 1;
-// int current_speed = 150000;
+int16_t snk_x[MAX_SNAKE], snk_y[MAX_SNAKE];
+int snk_len, snk_dir_x, snk_dir_y;
+int apple_x, apple_y;
+int level = 1;
+int current_speed = 150000;
 
-// void uart_print(const char* str) {
-//     while (*str) {
-//         while (!((*uart_status) & 0x01)); 
-//         *uart_data = *str++;
-//     }
-// }
+void uart_print(const char* str) {
+    while (*str) {
+        while (!((*uart_status) & 0x01)); 
+        *uart_data = *str++;
+    }
+}
 
-// void spi_cs_low()  { while (((*spi_ctrl) & 0x01) == 0); *spi_ctrl = 0x00; }
-// void spi_cs_high() { while (((*spi_ctrl) & 0x01) == 0); *spi_ctrl = 0x02; }
-// unsigned int spi_transfer(unsigned int d) {
-//     volatile unsigned int dummy = *spi_data; (void)dummy;
-//     *spi_data = d;
-//     while (((*spi_ctrl) & 0x02) == 0);
-//     return (*spi_data) & 0xFF;
-// }
+void spi_cs_low()  { while (((*spi_ctrl) & 0x01) == 0); *spi_ctrl = 0x00; }
+void spi_cs_high() { while (((*spi_ctrl) & 0x01) == 0); *spi_ctrl = 0x02; }
+unsigned int spi_transfer(unsigned int d) {
+    volatile unsigned int dummy = *spi_data; (void)dummy;
+    *spi_data = d;
+    while (((*spi_ctrl) & 0x02) == 0);
+    return (*spi_data) & 0xFF;
+}
 
-// void read_tilt(int *x, int *y) {
-//     spi_cs_low(); spi_transfer(0x0B); spi_transfer(0x08);
-//     *x = (signed char)spi_transfer(0x00);
-//     *y = (signed char)spi_transfer(0x00);
-//     spi_transfer(0x00); spi_cs_high();
-// }
+void read_tilt(int *x, int *y) {
+    spi_cs_low(); spi_transfer(0x0B); spi_transfer(0x08);
+    *x = (signed char)spi_transfer(0x00);
+    *y = (signed char)spi_transfer(0x00);
+    spi_transfer(0x00); spi_cs_high();
+}
 
-// void draw_block(int x, int y, uint8_t color) {
-//     for (int r = 0; r < GRID_SIZE; r++)
-//         for (int c = 0; c < GRID_SIZE; c++)
-//             vram[((y + r) * 320) + (x + c)] = color;
-// }
+void draw_block(int x, int y, uint8_t color) {
+    for (int r = 0; r < GRID_SIZE; r++)
+        for (int c = 0; c < GRID_SIZE; c++)
+            vram[((y + r) * 320) + (x + c)] = color;
+}
 
-// void draw_wall_rect(int x, int y, int w, int h) {
-//     for (int r = 0; r < h; r += GRID_SIZE)
-//         for (int c = 0; c < w; c += GRID_SIZE)
-//             draw_block(x + c, y + r, WALL_COLOR);
-// }
+void draw_wall_rect(int x, int y, int w, int h) {
+    for (int r = 0; r < h; r += GRID_SIZE)
+        for (int c = 0; c < w; c += GRID_SIZE)
+            draw_block(x + c, y + r, WALL_COLOR);
+}
 
-// static uint32_t seed = 98765;
-// int rand_pos(int max) {
-//     seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF;
-//     return (seed % (max / GRID_SIZE)) * GRID_SIZE;
-// }
+static uint32_t seed = 98765;
+int rand_pos(int max) {
+    seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF;
+    return (seed % (max / GRID_SIZE)) * GRID_SIZE;
+}
 
-// void spawn_apple() {
-//     while(1) {
-//         apple_x = rand_pos(300);
-//         apple_y = rand_pos(220);
-//         if (apple_x < GRID_SIZE * 2) apple_x = GRID_SIZE * 2;
-//         if (apple_y < GRID_SIZE * 2) apple_y = GRID_SIZE * 2;
-//         if (vram[(apple_y * 320) + apple_x] == BG_COLOR) break; 
-//     }
-//     draw_block(apple_x, apple_y, APPLE_COLOR);
-// }
+void spawn_apple() {
+    while(1) {
+        apple_x = rand_pos(300);
+        apple_y = rand_pos(220);
+        if (apple_x < GRID_SIZE * 2) apple_x = GRID_SIZE * 2;
+        if (apple_y < GRID_SIZE * 2) apple_y = GRID_SIZE * 2;
+        if (vram[(apple_y * 320) + apple_x] == BG_COLOR) break; 
+    }
+    draw_block(apple_x, apple_y, APPLE_COLOR);
+}
 
-// void build_maze() {
-//     for(int i = 0; i < 76800; i++) vram[i] = BG_COLOR; // Wipe screen
+void build_maze() {
+    for(int i = 0; i < 76800; i++) vram[i] = BG_COLOR; // Wipe screen
     
-//     // Outer Borders (Visual Walls)
-//     draw_wall_rect(0, 0, 320, GRID_SIZE);            
-//     draw_wall_rect(0, 240-GRID_SIZE, 320, GRID_SIZE); 
-//     draw_wall_rect(0, 0, GRID_SIZE, 240);            
-//     draw_wall_rect(320-GRID_SIZE, 0, GRID_SIZE, 240); 
+    // Outer Borders (Visual Walls)
+    draw_wall_rect(0, 0, 320, GRID_SIZE);            
+    draw_wall_rect(0, 240-GRID_SIZE, 320, GRID_SIZE); 
+    draw_wall_rect(0, 0, GRID_SIZE, 240);            
+    draw_wall_rect(320-GRID_SIZE, 0, GRID_SIZE, 240); 
 
-//     if (level == 2) {
-//         // Level 2: Four Pillars
-//         draw_wall_rect(80, 60, 20, 40);
-//         draw_wall_rect(220, 60, 20, 40);
-//         draw_wall_rect(80, 140, 20, 40);
-//         draw_wall_rect(220, 140, 20, 40);
-//     } 
-//     else if (level == 3) {
-//         // Level 3: The Gauntlet
-//         draw_wall_rect(40, 40, 240, GRID_SIZE);
-//         draw_wall_rect(160, 40, GRID_SIZE, 100);
-//         draw_wall_rect(40, 80, 80, GRID_SIZE);
-//         draw_wall_rect(80, 120, GRID_SIZE, 80);
-//         draw_wall_rect(120, 160, 120, GRID_SIZE);
-//         draw_wall_rect(240, 80, GRID_SIZE, 120);
-//         draw_wall_rect(200, 80, 40, GRID_SIZE);
-//     }
-//     spawn_apple();
-// }
+    if (level == 2) {
+        // Level 2: Four Pillars
+        draw_wall_rect(80, 60, 20, 40);
+        draw_wall_rect(220, 60, 20, 40);
+        draw_wall_rect(80, 140, 20, 40);
+        draw_wall_rect(220, 140, 20, 40);
+    } 
+    else if (level == 3) {
+        // Level 3: The Gauntlet
+        draw_wall_rect(40, 40, 240, GRID_SIZE);
+        draw_wall_rect(160, 40, GRID_SIZE, 100);
+        draw_wall_rect(40, 80, 80, GRID_SIZE);
+        draw_wall_rect(80, 120, GRID_SIZE, 80);
+        draw_wall_rect(120, 160, 120, GRID_SIZE);
+        draw_wall_rect(240, 80, GRID_SIZE, 120);
+        draw_wall_rect(200, 80, 40, GRID_SIZE);
+    }
+    spawn_apple();
+}
 
-// void load_level() {
-//     uart_print("\r\n--- LOADING LEVEL ---\r\n");
+void load_level() {
+    uart_print("\r\n--- LOADING LEVEL ---\r\n");
     
-//     if (level == 1) current_speed = 150000; // Normal
-//     if (level == 2) current_speed = 80000;  // Fast
-//     if (level == 3) current_speed = 30000;  // Max Speed
+    if (level == 1) current_speed = 150000; // Normal
+    if (level == 2) current_speed = 80000;  // Fast
+    if (level == 3) current_speed = 30000;  // Max Speed
 
-//     snk_len = 5; 
+    snk_len = 5; 
     
-//     // DEAD STOP: The snake won't move until you tilt the board
-//     snk_dir_x = 0; 
-//     snk_dir_y = 0;
+    // DEAD STOP: The snake won't move until you tilt the board
+    snk_dir_x = 0; 
+    snk_dir_y = 0;
     
-//     build_maze();
+    build_maze();
     
-//     // Place snake safely in the middle of the screen
-//     for(int i = 0; i < snk_len; i++) { 
-//         snk_x[i] = 160 - (i*GRID_SIZE); 
-//         snk_y[i] = 120; 
-//         if (i == 0) draw_block(snk_x[i], snk_y[i], HEAD_COLOR);
-//         else draw_block(snk_x[i], snk_y[i], BODY_COLOR);
-//     }
-// }
+    // Place snake safely in the middle of the screen
+    for(int i = 0; i < snk_len; i++) { 
+        snk_x[i] = 160 - (i*GRID_SIZE); 
+        snk_y[i] = 120; 
+        if (i == 0) draw_block(snk_x[i], snk_y[i], HEAD_COLOR);
+        else draw_block(snk_x[i], snk_y[i], BODY_COLOR);
+    }
+}
 
-// int main() {
-//     spi_cs_high(); for(volatile int i=0; i<100000; i++);
-//     spi_cs_low(); spi_transfer(0x0A); spi_transfer(0x2D); spi_transfer(0x02); spi_cs_high();
+int main() {
+    spi_cs_high(); for(volatile int i=0; i<100000; i++);
+    spi_cs_low(); spi_transfer(0x0A); spi_transfer(0x2D); spi_transfer(0x02); spi_cs_high();
 
-//     uart_print("\r\n*** 3-LEVEL TILT SNAKE ***\r\n");
-//     level = 1; 
-//     load_level();
+    uart_print("\r\n*** 3-LEVEL TILT SNAKE ***\r\n");
+    level = 1; 
+    load_level();
 
-//     while(1) {
-//         int ax, ay; read_tilt(&ax, &ay);
+    while(1) {
+        int ax, ay; read_tilt(&ax, &ay);
         
-//         // Only change direction if we tilt hard enough
-//         if (ax > 15 && snk_dir_x == 0)       { snk_dir_x = 1; snk_dir_y = 0; }
-//         else if (ax < -15 && snk_dir_x == 0) { snk_dir_x = -1; snk_dir_y = 0; }
-//         else if (ay > 15 && snk_dir_y == 0)  { snk_dir_x = 0; snk_dir_y = -1; }
-//         else if (ay < -15 && snk_dir_y == 0) { snk_dir_x = 0; snk_dir_y = 1; }
+        // Only change direction if we tilt hard enough
+        if (ax > 15 && snk_dir_x == 0)       { snk_dir_x = 1; snk_dir_y = 0; }
+        else if (ax < -15 && snk_dir_x == 0) { snk_dir_x = -1; snk_dir_y = 0; }
+        else if (ay > 15 && snk_dir_y == 0)  { snk_dir_x = 0; snk_dir_y = -1; }
+        else if (ay < -15 && snk_dir_y == 0) { snk_dir_x = 0; snk_dir_y = 1; }
 
-//         // If we haven't tilted yet (start of level), just wait
-//         if (snk_dir_x == 0 && snk_dir_y == 0) continue;
+        // If we haven't tilted yet (start of level), just wait
+        if (snk_dir_x == 0 && snk_dir_y == 0) continue;
 
-//         int next_x = snk_x[0] + (snk_dir_x * GRID_SIZE);
-//         int next_y = snk_y[0] + (snk_dir_y * GRID_SIZE);
+        int next_x = snk_x[0] + (snk_dir_x * GRID_SIZE);
+        int next_y = snk_y[0] + (snk_dir_y * GRID_SIZE);
         
-//         // ==========================================
-//         // BUG FIX: HARD BORDER COLLISION CHECK
-//         // Must happen BEFORE reading VRAM to prevent hardware bus crashes!
-//         // ==========================================
-//         if (next_x < 0 || next_x > (320 - GRID_SIZE) || next_y < 0 || next_y > (240 - GRID_SIZE)) {
-//             uart_print("\r\n[!] CRASH! Hit the outer border. Back to Level 1.\r\n");
-//             level = 1;
-//             load_level();
-//             continue;
-//         }
+        // ==========================================
+        // BUG FIX: HARD BORDER COLLISION CHECK
+        // Must happen BEFORE reading VRAM to prevent hardware bus crashes!
+        // ==========================================
+        if (next_x < 0 || next_x > (320 - GRID_SIZE) || next_y < 0 || next_y > (240 - GRID_SIZE)) {
+            uart_print("\r\n[!] CRASH! Hit the outer border. Back to Level 1.\r\n");
+            level = 1;
+            load_level();
+            continue;
+        }
 
-//         uint8_t target = vram[(next_y * 320) + next_x];
+        uint8_t target = vram[(next_y * 320) + next_x];
 
-//         // Hit an Internal Wall or Tail -> Restart completely
-//         if (target == WALL_COLOR || target == BODY_COLOR) {
-//             uart_print("\r\n[!] CRASH! Hit an obstacle. Back to Level 1.\r\n");
-//             level = 1;
-//             load_level(); 
-//             continue; 
-//         } 
+        // Hit an Internal Wall or Tail -> Restart completely
+        if (target == WALL_COLOR || target == BODY_COLOR) {
+            uart_print("\r\n[!] CRASH! Hit an obstacle. Back to Level 1.\r\n");
+            level = 1;
+            load_level(); 
+            continue; 
+        } 
         
-//         // Hit the Apple -> LEVEL UP
-//         if (target == APPLE_COLOR) {
-//             level++;
+        // Hit the Apple -> LEVEL UP
+        if (target == APPLE_COLOR) {
+            level++;
             
-//             if (level > 3) {
-//                 uart_print("\r\n*** YOU BEAT LEVEL 3! YOU WIN! ***\r\n");
-//                 level = 1; // Restart for fun
-//             } else {
-//                 uart_print("\r\n*** LEVEL UP! ***\r\n");
-//             }
+            if (level > 3) {
+                uart_print("\r\n*** YOU BEAT LEVEL 3! YOU WIN! ***\r\n");
+                level = 1; // Restart for fun
+            } else {
+                uart_print("\r\n*** LEVEL UP! ***\r\n");
+            }
 
-//             // Brief pause so you can see the apple was eaten before the screen wipes
-//             for(volatile int i=0; i<3000000; i++); 
+            // Brief pause so you can see the apple was eaten before the screen wipes
+            for(volatile int i=0; i<3000000; i++); 
 
-//             load_level(); 
-//             continue; // Safely skip the rest of the loop and wait for new tilt
-//         }
+            load_level(); 
+            continue; // Safely skip the rest of the loop and wait for new tilt
+        }
 
-//         // Normal movement
-//         draw_block(snk_x[snk_len-1], snk_y[snk_len-1], BG_COLOR); 
-//         for(int i = snk_len - 1; i > 0; i--) { 
-//             snk_x[i] = snk_x[i-1]; 
-//             snk_y[i] = snk_y[i-1]; 
-//             draw_block(snk_x[i], snk_y[i], BODY_COLOR); 
-//         }
-//         snk_x[0] = next_x; snk_y[0] = next_y;
-//         draw_block(snk_x[0], snk_y[0], HEAD_COLOR);
+        // Normal movement
+        draw_block(snk_x[snk_len-1], snk_y[snk_len-1], BG_COLOR); 
+        for(int i = snk_len - 1; i > 0; i--) { 
+            snk_x[i] = snk_x[i-1]; 
+            snk_y[i] = snk_y[i-1]; 
+            draw_block(snk_x[i], snk_y[i], BODY_COLOR); 
+        }
+        snk_x[0] = next_x; snk_y[0] = next_y;
+        draw_block(snk_x[0], snk_y[0], HEAD_COLOR);
 
-//         for(volatile int i=0; i<current_speed; i++); // Speed delay
-//     }
-// }
+        for(volatile int i=0; i<current_speed; i++); // Speed delay
+    }
+}*/
 
-//THERMOMETER
+/*//THERMOMETER
 #include <stdint.h>
 
 // =========================================
@@ -2675,4 +2687,5 @@ int main() {
 
         for (volatile int i = 0; i < 2000000; i++);
     }
-}
+}*/
+

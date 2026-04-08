@@ -2,12 +2,16 @@ PREFIX = riscv-none-elf-
 CC = $(PREFIX)gcc
 OBJCOPY = $(PREFIX)objcopy
 
-CFLAGS_BASE = -march=rv32i -mabi=ilp32 -nostartfiles -Os# --- BOOTLOADER DEFINITIONS ---
+CFLAGS_BASE = -march=rv32i -mabi=ilp32 -nostartfiles -Os
+
+# --- BOOTLOADER DEFINITIONS ---
 BOOT_SRCS = boot_start.s boot.c
 BOOT_CFLAGS = $(CFLAGS_BASE) -T boot.ld
 
 # --- APPLICATION DEFINITIONS ---
-APP_SRCS = app_start.s app.c
+# If no APP is specified in the terminal, default to app.c
+APP ?= app.c
+APP_SRCS = app_start.s $(APP)
 APP_CFLAGS = $(CFLAGS_BASE) -T app.ld
 
 all: bootloader.hex firmware.bin
