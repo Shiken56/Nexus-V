@@ -12,22 +12,31 @@
 * **System Clock:** 100 MHz (Unified clock domain for CPU and AXI Bus)
 * **System Bus:** AMBA AXI4-Lite Crossbar (1 Master, 5 Slaves)
 * **Main Memory:** 32 KB Block RAM (Dual-purpose Instruction/Data, RWX permissions)
-* **Video Memory:** 512 Bytes Dual-Port VRAM mapped to a 100 MHz VGA Sync Driver
+* **Video Memory:** ~75 KB (19,200 words) 32-bit Dual-Port VRAM mapped to a 100 MHz VGA Sync Driver
 
 ---
 
 ## AXI4-Lite Memory Map
 
-The SoC utilizes a strict memory-mapped I/O approach. The AXI crossbar routes CPU read/write transactions to the following physical base addresses. Each peripheral is allocated a 64 KB address space.
+The SoC utilizes a strict memory-mapped I/O approach. The AXI crossbar routes CPU read/write transactions to the following physical base addresses. 
 
-| Peripheral | Base Address | Access | Description |
+| Peripheral | Base Address | Size | Access | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **Main RAM** | `0x0000_0000` | 64 KB | R/W | 32 KB physical BRAM instance. Contains Bootloader & Application logic. |
+| **LED GPIO** | `0x1000_0000` | 64 KB | W | 8-bit output register mapped to onboard Artix-7 LEDs. |
+| **UART Core** | `0x2000_0000` | 64 KB | R/W | 115200 Baud serial controller for PC communication & firmware flashing. |
+| **SPI Master** | `0x3000_0000` | 64 KB | R/W | Communicates with the onboard ADXL362 accelerometer & external sensors. |
+| **VGA VRAM** | `0x4000_0000` | 128 KB | W | 32-bit wide framebuffer for the custom external display driver. |
+| **I2C Master** | `0x5000_0000` | 64 KB | R/W | Custom AXI-wrapped I2C controller for multi-device sensor polling. |
+
+## Bootloader & Stack Memory Map
+The 32 KB BRAM is partitioned to safely house both the hardware bootloader and the dynamic user applications. The stack pointer (SP) is initialized at the top of memory and grows downwards. When the bootloader jumps to the application offset, the application's startup assembly file resets the SP, providing a clean execution environment.
+
+| Address | Section | Size | Description |
 | :--- | :--- | :--- | :--- |
-| **Main RAM** | `0x0000_0000` | R/W | 8 KB BRAM instance. Contains Bootloader & Application logic. |
-| **LED GPIO** | `0x1000_0000` | W | 8-bit output register mapped to onboard Artix-7 LEDs. |
-| **UART Core** | `0x2000_0000` | R/W | 115200 Baud serial controller for PC communication & firmware flashing. |
-| **SPI Master** | `0x3000_0000` | R/W | Communicates with the onboard ADXL362 accelerometer & external sensors. |
-| **VGA VRAM** | `0x4000_0000` | W | 512-byte framebuffer for the custom external display driver. |
-| **I2C Master** | *Pending* | - | *(In development: For multi-device low-speed sensor polling)* |
+| `0x0000_7FFC` | **Stack Top** | - | Initial Stack Pointer (grows downwards). |
+| `0x0000_1000` | **App Base** | 28 KB | `app.c` logic dynamically flashed via UART. |
+| `0x0000_0000` | **Boot Base** | 4 KB | `boot.c` permanently baked into BRAM during synthesis. |
 
 ---
 
@@ -101,12 +110,10 @@ The Nexus-V architecture was successfully synthesized, implemented, and routed o
 ### Device Utilization
 | Resource | Utilization | Available | Percentage |
 | :--- | :--- | :--- | :--- |
-| **LUTs** | 4,250 | 63,400 | 6.7% |
-| **Flip-Flops** | 2,100 | 126,800 | 1.6% |
-| **BRAM Tiles** | 2.5 | 135 | 1.8% |
-| **DSPs** | 0 | 240 | 0.0% |
+| **LUTs** | 1,969 | 63,400 | 3.1% |
+| **Flip-Flops** | 1,912 | 126,800 | 1.5% |
+| **BRAM Tiles** | 40 | 135 | 29.6% |
 
-*(Note: Replace the numbers above with your final Vivado implementation report)*
 
 ### RTL Netlist
 Below is the synthesized RTL schematic highlighting the PicoRV32 core, the AXI-Lite Crossbar, and the peripheral routing:
