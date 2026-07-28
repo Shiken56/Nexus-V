@@ -74,8 +74,8 @@ module vga_driver (
 
     //Calculate VRAM Address based on Grid 
     //320x240 framebuffer scaled 2× to 640x480 VGA
-    wire [8:0] grid_x = h_cnt[9:1]; // Divide by 32
-    wire [8:0] grid_y = v_cnt[9:1]; // Divide by 32
+    wire [8:0] grid_x = h_cnt[9:1]; // Divide by 2
+    wire [8:0] grid_y = v_cnt[9:1]; // Divide by 2
 
     always @(posedge clk_100) begin
         if (ce_25) begin
