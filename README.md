@@ -16,7 +16,7 @@
 
 ### Block Diagram
 
-![Block_diagram](assets/NexusV_blk_diagram.jpeg)
+<img src = "assets/NexusV_blk_diagram.jpeg" alt="Block diagram" width = "70%">
 
 ---
 
@@ -113,20 +113,26 @@ The Nexus-V architecture was successfully synthesized, implemented, and routed o
 *(Note: Replace the numbers above with your final Vivado implementation report)*
 
 ### RTL Netlist
-Below is the synthesized RTL schematic highlighting the PicoRV32 core, the AXI-Lite Crossbar, and the peripheral routing:
+Below is the synthesized RTL netist highlighting the PicoRV32 core, the AXI-Lite Crossbar, and the peripheral routing:
 
-![RTL Netlist Schematic](assets/nex_v_res_netlist.jpeg)
+<img src="assets/nex_v_res_netlist.jpeg" alt="RTL Netlist" width="70%">
 
 ## System Showcase
 
 **1. Dynamic Firmware Flashing over UART:**
-![Firmware Upload working](assets/nex_v_res3.jpeg)
+
+<img src="assets/nex_v_res3.jpeg" alt="Firmware Upload working" width="70%">
 
 **2. VGA Display & Sensor Integration:**
-![VGA and Board Output](assets/nex_v_res4.jpeg)
+
+<img src="assets/nex_v_res4.jpeg" alt="VGA and Board Output" width="70%">
 
 **3. Temperator sensor:**
-![VGA and Board Output](assets/nex_v_res1.jpeg)
+
+<img src="assets/nex_v_res1.jpeg" alt="Temp sensor" width="65%">
+
+<br>
 
 **4. Overall System working:**
-![VGA and Board Output](assets/nex_v_res2.jpeg)
+
+<img src="assets/nex_v_res2.jpeg" alt="system working" width="70%">
