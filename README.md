@@ -130,11 +130,11 @@ Below is the synthesized RTL netist highlighting the PicoRV32 core, the AXI-Lite
 
 <img src="assets/nex_v_res3.jpeg" alt="Firmware Upload working" width="70%">
 
-**2. VGA Display & Sensor Integration:**
+**2. VGA Display & Accelerometer Sensor Integration:**
 
 <img src="assets/nex_v_res4.jpeg" alt="VGA and Board Output" width="70%">
 
-**3. Temperator sensor:**
+**3. Temperature sensor:**
 
 <img src="assets/nex_v_res1.jpeg" alt="Temp sensor" width="65%">
 
