@@ -14,6 +14,10 @@
 * **Main Memory:** 32 KB Block RAM (Dual-purpose Instruction/Data, RWX permissions)
 * **Video Memory:** ~75 KB (19,200 words) 32-bit Dual-Port VRAM mapped to a 100 MHz VGA Sync Driver
 
+### Block Diagram
+
+<img src = "assets/NexusV_blk_diagram.jpeg" alt="Block diagram" width = "70%">
+
 ---
 
 ## AXI4-Lite Memory Map
@@ -116,14 +120,26 @@ The Nexus-V architecture was successfully synthesized, implemented, and routed o
 
 
 ### RTL Netlist
-Below is the synthesized RTL schematic highlighting the PicoRV32 core, the AXI-Lite Crossbar, and the peripheral routing:
+Below is the synthesized RTL netist highlighting the PicoRV32 core, the AXI-Lite Crossbar, and the peripheral routing:
 
-![RTL Netlist Schematic](assets/netlist.png)
+<img src="assets/nex_v_res_netlist.jpeg" alt="RTL Netlist" width="70%">
 
 ## System Showcase
 
 **1. Dynamic Firmware Flashing over UART:**
-![Firmware Upload Process](assets/upload_demo.gif)
+
+<img src="assets/nex_v_res3.jpeg" alt="Firmware Upload working" width="70%">
 
 **2. VGA Display & Sensor Integration:**
-![VGA and Board Output](assets/board_working.jpg)
+
+<img src="assets/nex_v_res4.jpeg" alt="VGA and Board Output" width="70%">
+
+**3. Temperator sensor:**
+
+<img src="assets/nex_v_res1.jpeg" alt="Temp sensor" width="65%">
+
+<br>
+
+**4. Overall System working:**
+
+<img src="assets/nex_v_res2.jpeg" alt="system working" width="70%">
