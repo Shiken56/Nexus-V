@@ -115,12 +115,18 @@ The Nexus-V architecture was successfully synthesized, implemented, and routed o
 ### RTL Netlist
 Below is the synthesized RTL schematic highlighting the PicoRV32 core, the AXI-Lite Crossbar, and the peripheral routing:
 
-![RTL Netlist Schematic](assets/netlist.png)
+![RTL Netlist Schematic](assets/nex_v_res_netlist.jpeg)
 
 ## System Showcase
 
 **1. Dynamic Firmware Flashing over UART:**
-![Firmware Upload Process](assets/upload_demo.gif)
+![Firmware Upload working](assets/nex_v_res3.jpeg)
 
 **2. VGA Display & Sensor Integration:**
-![VGA and Board Output](assets/board_working.jpg)
+![VGA and Board Output](assets/nex_v_res4.jpeg)
+
+**3. Temperator sensor:**
+![VGA and Board Output](assets/nex_v_res1.jpeg)
+
+**4. Overall System working:**
+![VGA and Board Output](assets/nex_v_res2.jpeg)
