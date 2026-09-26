@@ -14,6 +14,10 @@
 * **Main Memory:** 32 KB Block RAM (Dual-purpose Instruction/Data, RWX permissions)
 * **Video Memory:** 512 Bytes Dual-Port VRAM mapped to a 100 MHz VGA Sync Driver
 
+### Block Diagram
+
+![Block_diagram](assets/NexusV_blk_diagram.jpeg)
+
 ---
 
 ## AXI4-Lite Memory Map
